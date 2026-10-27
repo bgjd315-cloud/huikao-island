@@ -298,6 +298,7 @@
   $("#story").addEventListener("click", next);
   $("#story-skip").addEventListener("click", (e) => {
     e.stopPropagation();
+    if (!scene) return;
     scene.i = scene.lines.length - 1;
     next();
   });
