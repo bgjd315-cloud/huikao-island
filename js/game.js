@@ -24,8 +24,8 @@
     { id: "句", name: "文句工坊", desc: "標點符號、詞性語法、語病與詞語", test: (q) => ["標點", "語法", "語病詞語"].includes(q.kind) },
     { id: "禮", name: "禮俗市集", desc: "題辭、對聯、稱謂、書信", test: (q) => q.kind === "應用文" },
     { id: "詩", name: "詩詞亭", desc: "詩詞格律、節慶與國學常識", test: (q) => q.kind === "文化常識" },
-    { id: "殿", name: "會考神殿", desc: "只出會考、基測原題", test: (q) => EXAM(q) },
-    { id: "亂", name: "百字亂流", desc: "形音義、成語全部混在一起", test: () => true },
+    { id: "殿", name: "會考神殿", desc: "只出會考、基測真題", test: (q) => EXAM(q) },
+    { id: "亂", name: "百字亂流", desc: "所有類別的題目全部混在一起", test: () => true },
     { id: "逃", name: "追捕逃靈", desc: "回頭抓之前答錯逃走的字靈", test: (q) => !!S.esc[q.id] },
   ];
   const GIMG = { 音: "sound", 形: "form", 義: "meaning", 成: "idiom", 字: "ruins", 句: "workshop", 禮: "market", 詩: "pavilion", 殿: "temple", 亂: "chaos", 逃: "chase" };
@@ -33,7 +33,7 @@
     { id: "mirror1", name: "照妖鏡", desc: "答題時去掉一個錯誤選項。", cost: 30, give: { mirror: 1 } },
     { id: "mirror5", name: "照妖鏡（五面裝）", desc: "一次買五面，比較划算。", cost: 130, give: { mirror: 5 } },
     { id: "charm1", name: "定身符", desc: "先貼上再作答：答錯時字靈不會逃走，可以再答一次（收服時銅錢減半）。", cost: 60, give: { charm: 1 } },
-    { id: "pot", name: "聚寶盆", desc: "每升一級，之後抓寶的銅錢多一成。", up: "pot", max: 10, base: 200, exp: 1.6 },
+    { id: "pot", name: "聚寶盆", desc: "每升一級，之後採集得到的銅錢多一成。", up: "pot", max: 10, base: 200, exp: 1.6 },
     { id: "brush", name: "文房四寶", desc: "每升一級，全部字靈的戰力多 5%。", up: "brush", max: 10, base: 300, exp: 1.7 },
   ];
 
@@ -134,6 +134,7 @@
     go: (tab) => show(tab),
     power: () => totalPower(),
     quests: () => QUESTS,
+    questions: () => BANK,
     gainMat(got) {
       S.mat ||= {};
       for (const [k, v] of Object.entries(got)) S.mat[k] = (S.mat[k] || 0) + v;
@@ -270,7 +271,7 @@
   }
   function startRun(g) {
     const qs = pickQuestions(g);
-    if (!qs.length) { toast("這個獵場目前沒有字靈"); return; }
+    if (!qs.length) { toast("這個採集地目前沒有字靈"); return; }
     run = { ground: g, qs, i: 0, combo: 0, log: [], coins: 0, caught: 0, done: false, startPower: totalPower(), mat: {} };
     S.runs++;
     show("enc");
@@ -412,7 +413,7 @@
       run.combo = 0;
       gain = t.coin * frac * 0.5;
       if (!S.got[q.id]) S.esc[q.id] = 1;
-      verdict = `擦身而過：多選錯 ${wrongK} 個選項，字靈掙脫了`;
+      verdict = `擦身而過：這題錯了 ${wrongK} 個選項，字靈掙脫了`;
       cls = "part";
       $("#stage").classList.add("fled");
     } else {
@@ -630,9 +631,9 @@
     $("#me-card").innerHTML =
       `<h2>${r.name}</h2>` +
       `<p>戰力 <b>${p}</b>　銅錢 <b>${S.coins}</b>　採集 <b>${S.runs}</b> 次　最高連收 <b>${S.bestCombo}</b></p>` +
-      `<p>圖鑑 <b>${nGot}</b>／${BANK.length} 隻　逃走名單 <b>${nEsc}</b> 隻　集滿會考年度印記 <b>${done}</b> 份</p>` +
+      `<p>圖鑑 <b>${nGot}</b>／${BANK.length} 隻　逃走名單 <b>${nEsc}</b> 隻　集滿真題年度印記 <b>${done}</b> 份</p>` +
       `<h3>各類答對率（第一次作答與重抓都算）</h3><div class="bars">${bars}</div>` +
-      `<p class="muted small">戰力＝已收服字靈（墨靈 1、玉靈 3、金靈 6、朱印神靈 12，熟練度每多一顆星加五成）＋每集滿一年會考真題的印記 20，再乘上文房四寶加成。</p>`;
+      `<p class="muted small">戰力＝已收服字靈（墨靈 1、玉靈 3、金靈 6、朱印神靈 12，熟練度每多一顆星加五成）＋每集滿一年真題（會考或基測）的印記 20，再乘上文房四寶加成。</p>`;
   }
   $("#save-copy").addEventListener("click", async () => {
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));

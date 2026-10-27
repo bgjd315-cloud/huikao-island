@@ -49,8 +49,8 @@ const ITEMS = [
   { id: "pier", cat: "海上", name: "碼頭", cost: { wood: 6 }, score: 2, water: true, desc: "蓋在緊鄰陸地的海上。" },
   { id: "bridge", cat: "海上", name: "拱橋", cost: { stone: 6, glass: 2 }, score: 3, water: true, desc: "蓋在緊鄰陸地的海上。" },
   { id: "boat", cat: "海上", name: "帆船", cost: { wood: 4, redpaper: 1 }, score: 2, water: true, desc: "停在緊鄰陸地的海上。" },
-  { id: "moon", cat: "地標", name: "賞月台", cost: { poem: 4, stone: 4 }, score: 4 },
-  { id: "lighthouse", cat: "地標", name: "燈塔", cost: { star: 3, stone: 10 }, score: 8, desc: "要用會考真題換來的星砂。" },
+  { id: "moon", cat: "地標", name: "賞月臺", cost: { poem: 4, stone: 4 }, score: 4 },
+  { id: "lighthouse", cat: "地標", name: "燈塔", cost: { star: 3, stone: 10 }, score: 8, desc: "要用會考、基測真題換來的星砂。" },
   { id: "balloon", cat: "地標", name: "熱氣球", cost: { redpaper: 4, poem: 2 }, score: 4, need: 250 },
   { id: "arch", cat: "地標", name: "狀元牌樓", cost: { star: 8, wood: 10, stone: 10 }, score: 12, need: 900 },
 ];
@@ -510,9 +510,12 @@ function spawnResidents() {
     residents.push({ s, to: s.position.clone(), wait: 1, phase: 0, y: 0.58 });
   }
   // 劇情中入住的島民：用立繪當看板，比字靈大一點
-  const moved = (G.state().story && G.state().story.moved) || [];
+  const S = G.state();
+  const moved = [...((S.story && S.story.moved) || []), ...GUESTS.filter((id) => (S.guests || {})[id])];
   for (const id of moved) {
-    const tex = npcTex[id] ||= new THREE.TextureLoader().load(`assets/npc/${id}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; });
+    if (npcBad[id]) continue;   // 立繪還沒生好就先不放
+    const tex = npcTex[id] ||= new THREE.TextureLoader().load(`assets/npc/${id}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; },
+      undefined, () => { npcBad[id] = 1; for (const r of residents) if (r.npc === id) r.s.visible = false; });
     tex.colorSpace = THREE.SRGBColorSpace;   // 不設的話圖會偏白
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
     s.scale.set(1, 1, 1);
@@ -520,10 +523,10 @@ function spawnResidents() {
     const [px, pz] = pos(...unkey(k));
     s.position.set(px, 0.5, pz);
     scene.add(s);
-    residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6, y: 0.5 });
+    residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6, y: 0.5, npc: id });
   }
 }
-const npcTex = {};
+const npcTex = {}, npcBad = {};
 function moveResidents(dt, t) {
   const L = landSet(), I = island();
   const free = [...L].filter((k) => !I.objs[k] || ["path", "flowers"].includes(I.objs[k].t));
@@ -647,6 +650,7 @@ function tapCell(x, z) {
   G.save();
   rebuild();
   renderPalette();
+  if (building !== "remove" && building !== "rotate") checkGuests();
 }
 
 // ---------- 介面 ----------
@@ -719,38 +723,115 @@ const NPCS = {
   rabbit: { name: "兔子花匠", emoji: "🐰" },
   bear: { name: "熊熊木匠", emoji: "🐻" },
   crane: { name: "丹頂鶴爺爺", emoji: "🕊️" },
+  // 蓋了某種建築就會搬來的島民（不靠主線）：委託直接取自題庫已校對的題目
+  frog: { name: "青蛙歌手呱呱", emoji: "🐸", lure: "fountain", n: 1, task: "這個字怎麼唸",
+    kinds: ["字音"], hi: ["呱呱！這座噴水池的回音好棒，最適合練唱了！", "可是歌詞裡好多字我都唸不準……唱錯音會被笑的。", "以後遇到不會唸的字，就拜託你囉！"] },
+  redpanda: { name: "小貓熊書法家墨墨", emoji: "🎋", lure: "gazebo", n: 1, task: "文字的來歷",
+    kinds: ["六書", "字體書法"], hi: ["好安靜的書法亭，竹影搖搖，正好磨墨寫字。", "我在研究每個字是怎麼造出來的，還有歷代書法家的字體。", "你也來一起看看吧！"] },
+  shiba: { name: "柴犬偵探阿柴", emoji: "🐕", lure: "lamp", n: 3, task: "句子哪裡怪",
+    kinds: ["標點", "語病詞語", "語法"], hi: ["汪！路燈這麼亮，晚上巡邏終於看得清楚了。", "我專門調查「怪怪的句子」：標點放錯、用詞不當、句子不通。", "線索交給你，一起破案吧！"] },
+  sheep: { name: "小羊詩人咩咩", emoji: "🐑", lure: "moon", n: 1, task: "詩的小謎題",
+    kinds: ["文化常識"], re: /詩|詞|曲|體裁|作者|〈/, hi: ["咩～在賞月臺上看月亮，詩句自己就跑出來了。", "這是絕句還是律詩？這句是誰寫的？我常常搞混。", "陪我一起讀詩好嗎？"] },
+  deer: { name: "茶館老闆娘鹿姐", emoji: "🦌", lure: "stage", n: 1, task: "茶館的禮數",
+    kinds: ["應用文"], re: /題辭|聯|店|行業|場合/, hi: ["有戲臺就有人潮，我的茶館就開在旁邊吧！", "開店送禮、掛對聯、寫題辭，處處都是學問。", "客人問我的時候，就請你幫忙囉。"] },
+  turtle: { name: "烏龜長老龜爺爺", emoji: "🐢", lure: "bridge", n: 1, task: "老人家的學問",
+    kinds: ["文化常識", "應用文"], re: /節|天|習俗|時|歲|年|稱|令|家|舍|意思|提稱/, not: /詩|詞|曲|體裁|作者|〈|題辭|聯|店|行業|場合/,
+    hi: ["慢慢走過這座拱橋，終於到了。呵呵，好久沒出遠門了。", "過節的習俗、年齡的代稱、對人的稱呼，現在的年輕人常弄錯呢。", "老人家問的，你可要好好回答喔。"] },
+  penguin: { name: "企鵝船長企企", emoji: "🐧", lure: "boat", n: 1, task: "航海日誌的詞語",
+    kinds: ["成語", "字義"], hi: ["嗚——帆船靠岸！這座島看起來真不錯。", "我的航海日誌寫滿了成語和難懂的詞，有些意思連我自己也忘了。", "幫我看看日誌，好嗎？"] },
 };
+const GUESTS = Object.keys(NPCS).filter((id) => NPCS[id].lure);
 function npcPic(id, cls) {
   const n = NPCS[id] || NPCS.owl;
   return `<img class="${cls}" src="assets/npc/${id}.webp" alt="${n.emoji}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'${cls} emo',textContent:this.alt}))">`;
 }
+const guestPool = {};
+function guestQuests(id) {   // 新島民的委託：取自題庫同類別單選題；選項不洗牌，解析裡的 (A)(B) 才對得上
+  if (guestPool[id]) return guestPool[id];
+  const n = NPCS[id], rw = { 字卡: 10, 比對: 20, 情境: 30, 會考: 40 };
+  const mat = { 字音: "wood", 字形: "stone", 字義: "shell", 成語: "flower", 六書: "bamboo", 字體書法: "bamboo",
+    標點: "glass", 語法: "glass", 語病詞語: "glass", 應用文: "redpaper", 文化常識: "poem" };
+  return guestPool[id] = (G.questions() || []).filter((q) => n.kinds.includes(q.kind) && q.type === "single" && q.answer.length === 1 &&
+    (!n.re || n.re.test(q.stem)) && (!n.not || !n.not.test(q.stem))).map((q) => ({
+    id: "G" + q.id, npc: id, title: n.task, text: q.stem, options: q.options, answer: q.answer[0], explain: q.explanation || "",
+    fixed: true, reward: { [mat[q.kind] || "wood"]: 2, coin: rw[q.tier] || 10 },
+  }));
+}
+function guests() { return (G.state().guests ||= {}); }
 function questState() {
   const S = G.state();
   S.qb ||= { active: [], done: {}, used: 0 };
-  const pool = G.quests();
-  const byId = Object.fromEntries(pool.map((q) => [q.id, q]));
+  const byId = Object.fromEntries(G.quests().map((q) => [q.id, q]));
+  for (const id of GUESTS) if (guests()[id]) for (const q of guestQuests(id)) byId[q.id] = q;
   S.qb.active = S.qb.active.filter((id) => byId[id]);
-  // 第一次有 2 張；之後每完成一次採集（questTick）補一張
+  // 每位島民機會一樣：先抽島民，再抽他還沒做過的委託（新島民題目多，才不會蓋過原本的島民）
+  const groups = {};
+  for (const q of Object.values(byId)) (groups[q.npc] ||= []).push(q);
   const allow = 2 + (S.questTick || 0) - S.qb.used;
-  while (S.qb.active.length < 3 && allow > S.qb.active.length && pool.length) {
-    const fresh = pool.filter((q) => !S.qb.done[q.id] && !S.qb.active.includes(q.id));
-    const from = fresh.length ? fresh : pool.filter((q) => !S.qb.active.includes(q.id));
-    if (!from.length) break;
+  while (S.qb.active.length < 3 && allow > S.qb.active.length) {
+    const busy = new Set(S.qb.active.map((id) => byId[id].npc));
+    const npcs = Object.keys(groups).filter((n) => !busy.has(n));
+    if (!npcs.length) break;
+    const g = groups[npcs[Math.floor(Math.random() * npcs.length)]];
+    const fresh = g.filter((q) => !S.qb.done[q.id]);
+    const from = fresh.length ? fresh : g;
     S.qb.active.push(from[Math.floor(Math.random() * from.length)].id);
   }
   G.save();
   return { S, byId };
 }
+// 蓋好吸引島民的建築，島民就搬來，播一段登場對話
+function checkGuests() {
+  const c = {};
+  for (const o of Object.values(island().objs)) c[o.t] = (c[o.t] || 0) + 1;
+  const id = GUESTS.find((g) => !guests()[g] && (c[NPCS[g].lure] || 0) >= NPCS[g].n);
+  if (!id) return;
+  guests()[id] = 1;
+  G.save();
+  const n = NPCS[id], body = $("#mbody");
+  let i = 0;
+  const step = () => {
+    body.innerHTML = `<p class="small muted">新島民搬來了！</p><div class="qhost">${npcPic(id, "qnpc big")}<div><b>${n.name}</b><p>${n.hi[i]}</p></div></div>` +
+      `<button class="primary wide" id="g-next">${i < n.hi.length - 1 ? "繼續" : "歡迎入住！"}</button>`;
+    $("#g-next").addEventListener("click", () => {
+      if (++i < n.hi.length) return step();
+      $("#modal").classList.add("hidden");
+      G.toast(`${n.name}住進島上了，之後會來請你幫忙「${n.task}」`);
+      rebuild();
+      renderQuests();
+      checkGuests();
+    });
+  };
+  if (window.HKMusic) window.HKMusic.sfx("chapter");
+  step();
+  $("#modal").classList.remove("hidden");
+}
+function lureText(id) {
+  const n = NPCS[id], it = ITEM[n.lure];
+  if (n.lure === "boat") return "停一艘帆船";
+  if (n.n > 1) return `蓋 ${n.n} 盞${it.name}`;
+  return `蓋一座${it.name}`;
+}
+// 島民名冊：已入住顯示立繪，還沒來的顯示剪影和搬來的條件
+function rosterHtml() {
+  const moved = (G.state().story && G.state().story.moved) || [];
+  const row = (id, here, hint) => `<div class="rs ${here ? "" : "away"}">${npcPic(id, "qnpc")}<span>${here ? NPCS[id].name : "？？？"}</span>` +
+    `<small>${here ? (NPCS[id].task ? "委託：" + NPCS[id].task : "") : hint}</small></div>`;
+  const ids = Object.keys(NPCS);
+  const cells = ids.map((id) => NPCS[id].lure ? row(id, guests()[id], lureText(id)) : row(id, moved.includes(id), "跟著故事主線搬來"));
+  const cnt = ids.filter((id) => NPCS[id].lure ? guests()[id] : moved.includes(id)).length;
+  return `<details class="card roster"><summary>島民名冊（${cnt}／${ids.length}）</summary><div class="rs-grid">${cells.join("")}</div></details>`;
+}
 function renderQuests() {
   const box = $("#is-quests");
   if (!box) return;
   const { S, byId } = questState();
-  if (!G.quests().length) { box.innerHTML = ""; return; }
+  if (!G.quests().length && !GUESTS.some((id) => guests()[id])) { box.innerHTML = ""; return; }
   const cards = S.qb.active.map((id) => byId[id]).map((q) =>
     `<button class="quest" data-id="${q.id}">${npcPic(q.npc, "qnpc")}<span><b>${NPCS[q.npc]?.name || "島民"}的委託</b>` +
     `<span class="qtitle">${q.title}</span><span class="qrew">${rewardText(q.reward)}</span></span></button>`).join("");
   box.innerHTML = `<h2 class="sec">島民委託</h2>` +
-    (cards || `<p class="muted small card">目前沒有委託。去採集一趟（答滿 5 隻），島民就會再來找你。</p>`);
+    (cards || `<p class="muted small card">目前沒有委託。去採集一趟（答滿 5 隻），島民就會再來找你。</p>`) + rosterHtml();
   for (const b of box.querySelectorAll(".quest")) b.addEventListener("click", () => openQuest(byId[b.dataset.id]));
 }
 function rewardText(r) {
@@ -761,7 +842,8 @@ function rewardText(r) {
   }).join(" ") ;
 }
 function openQuest(q) {
-  const order = q.options.map((_, i) => i).sort(() => Math.random() - 0.5);
+  const order = q.options.map((_, i) => i);
+  if (!q.fixed) order.sort(() => Math.random() - 0.5);
   const body = $("#mbody");
   body.innerHTML = `<div class="qhost">${npcPic(q.npc, "qnpc big")}<div><b>${NPCS[q.npc]?.name || "島民"}</b><p>${q.text}</p></div></div>` +
     `<div class="opts">${order.map((oi, k) => `<button class="opt" data-oi="${oi}"><span class="k">${"ABCD"[k]}</span><span>${q.options[oi]}</span></button>`).join("")}</div>` +
@@ -794,7 +876,7 @@ function answerQuest(q, oi) {
         house[1].couplet = q.couplet;
         extra = `　${ITEM[house[1].t].name}門口貼上了春聯！`;
         rebuild();
-      } else extra = "　（島上蓋一間小木屋、石屋或書院，下次就能把春聯貼上門）";
+      } else extra = "　（島上蓋一間有門的房子，例如小木屋、石屋，下次就能把春聯貼上門）";
     }
   }
   G.save();
@@ -832,6 +914,7 @@ function show() {
   renderPalette();
   renderQuests();
   if (window.HKStory) window.HKStory.onIsland();
+  if ($("#modal").classList.contains("hidden")) checkGuests();
   requestAnimationFrame(resize);
 }
 

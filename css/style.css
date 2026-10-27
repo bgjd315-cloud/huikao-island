@@ -348,3 +348,10 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
 .av-mini .avi{margin-top:-1px}
 .st-big.av-face .avi{width:120px !important; height:158px !important; margin-top:-80px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
 @media (max-width:560px){ .st-big.av-face .avi{width:84px !important; height:111px !important; margin-top:-56px} }
+
+/* 島民名冊 */
+.roster summary{cursor:pointer; font-weight:700}
+.rs-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px; margin-top:.6rem}
+.rs{display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; font-size:.82rem}
+.rs small{opacity:.7; font-size:.72rem; line-height:1.25}
+.rs.away .qnpc{filter:brightness(0) opacity(.28)}

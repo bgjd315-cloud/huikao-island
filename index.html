@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
 <header class="top">
@@ -54,7 +54,7 @@
     <div class="card small muted">
       答題採集建材：字音林 🌲木材、字形山 ⛰️石材、字義海 🐚貝殼、成語谷 🌸花種、文字遺跡 📜竹簡、文句工坊 💎琉璃、禮俗市集 🧧紅紙、詩詞亭 📝詩箋；
       會考、基測真題第一次答對，另得 ✨星砂。島民會來委託你幫忙（送匾額、貼春聯、寫信……），答對有額外獎勵。
-      題目越難給越多，連續答對、追回逃走的字靈也有加成。收服的字靈會搬到島上散步。
+      題目越難，建材給得越多；連續答對、追回逃走的字靈也有加成。收服的字靈會搬到島上散步。
     </div>
   </section>
 
@@ -66,7 +66,7 @@
       <p>每次採集會遇到 <b>10 隻字靈</b>。答對就收服，帶回建材和銅錢；答錯牠就逃走，記進「逃走名單」，之後可以回頭追捕。</p>
       <div class="legend" id="legend"></div>
     </div>
-    <h2 class="sec">選獵場</h2>
+    <h2 class="sec">選採集地</h2>
     <div class="grounds" id="grounds"></div>
     <div class="card filters">
       <label>出題來源
@@ -140,7 +140,7 @@
         <select id="d-show"><option value="all">全部</option><option value="got">已收服</option><option value="esc">逃走名單</option></select>
       </div>
     </div>
-    <p class="muted small">集滿同一年的會考真題，就得到該年印記（戰力 +20）。</p>
+    <p class="muted small">集滿同一年的會考或基測真題，就得到該年印記（戰力 +20）。</p>
     <div class="badges" id="badges"></div>
     <div class="dex" id="dex"></div>
   </section>
@@ -156,7 +156,7 @@
     <div class="card" id="me-card"></div>
     <div class="card">
       <h3>存檔</h3>
-      <p class="muted">進度存在這支手機的瀏覽器裡。換手機或清除瀏覽資料前，先複製存檔碼。</p>
+      <p class="muted">進度存在這台裝置的瀏覽器裡。換裝置或清除瀏覽資料前，先複製存檔碼。</p>
       <div class="row wrap">
         <button id="save-copy">複製存檔碼</button>
         <button id="save-load">貼上存檔碼還原</button>
@@ -196,8 +196,8 @@
 </script>
 <script src="js/music.js?v=1"></script>
 <script src="js/avatar.js?v=7"></script>
-<script src="js/game.js?v=15"></script>
-<script src="js/story.js?v=10"></script>
-<script type="module" src="js/island.js?v=11"></script>
+<script src="js/game.js?v=16"></script>
+<script src="js/story.js?v=12"></script>
+<script type="module" src="js/island.js?v=12"></script>
 </body>
 </html>
