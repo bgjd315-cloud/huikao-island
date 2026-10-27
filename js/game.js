@@ -20,11 +20,15 @@
     { id: "形", name: "字形山", desc: "錯別字、同音字、形近字", test: (q) => q.kind === "字形" },
     { id: "義", name: "字義海", desc: "一字多義、古今異義", test: (q) => q.kind === "字義" },
     { id: "成", name: "成語谷", desc: "成語、詞語的意思與用法", test: (q) => q.kind === "成語" },
-    { id: "殿", name: "會考神殿", desc: "只出 104–115 年會考原題", test: (q) => EXAM(q) },
+    { id: "字", name: "文字遺跡", desc: "六書造字、字體演變、書法家", test: (q) => ["六書", "字體書法"].includes(q.kind) },
+    { id: "句", name: "文句工坊", desc: "標點符號、詞性語法、語病與詞語", test: (q) => ["標點", "語法", "語病詞語"].includes(q.kind) },
+    { id: "禮", name: "禮俗市集", desc: "題辭、對聯、稱謂、書信", test: (q) => q.kind === "應用文" },
+    { id: "詩", name: "詩詞亭", desc: "詩詞格律、節慶與國學常識", test: (q) => q.kind === "文化常識" },
+    { id: "殿", name: "會考神殿", desc: "只出會考、基測原題", test: (q) => EXAM(q) },
     { id: "亂", name: "百字亂流", desc: "形音義、成語全部混在一起", test: () => true },
     { id: "逃", name: "追捕逃靈", desc: "回頭抓之前答錯逃走的字靈", test: (q) => !!S.esc[q.id] },
   ];
-  const GIMG = { 音: "sound", 形: "form", 義: "meaning", 成: "idiom", 殿: "temple", 亂: "chaos", 逃: "chase" };
+  const GIMG = { 音: "sound", 形: "form", 義: "meaning", 成: "idiom", 字: "ruins", 句: "workshop", 禮: "market", 詩: "pavilion", 殿: "temple", 亂: "chaos", 逃: "chase" };
   const SHOP = [
     { id: "mirror1", name: "照妖鏡", desc: "答題時去掉一個錯誤選項。", cost: 30, give: { mirror: 1 } },
     { id: "mirror5", name: "照妖鏡（五面裝）", desc: "一次買五面，比較划算。", cost: 130, give: { mirror: 5 } },
@@ -33,8 +37,8 @@
     { id: "brush", name: "文房四寶", desc: "每升一級，全部字靈的戰力多 5%。", up: "brush", max: 10, base: 300, exp: 1.7 },
   ];
 
-  let BANK = [], BY_ID = {}, EDITION = "full";
-  const EXAM = (q) => q.srcType === "會考";
+  let BANK = [], BY_ID = {}, EDITION = "full", QUESTS = [];
+  const EXAM = (q) => q.srcType === "會考" || q.srcType === "基測";
   let S = load();
   let run = null;
 
@@ -83,7 +87,8 @@
     };
     if (q.tier === "字卡") g = pick(q.stem);
     else g = pick(q.options.join("／")) || pick(q.stem);
-    if (!g) g = { 字音: "音", 字形: "形", 字義: "義", 成語: "成" }[q.kind] || "字";
+    if (!g) g = { 字音: "音", 字形: "形", 字義: "義", 成語: "成", 六書: "造", 字體書法: "書", 標點: "標",
+      語法: "詞", 語病詞語: "句", 應用文: "禮", 文化常識: "詩" }[q.kind] || "字";
     if (!ZY.test(g) && g.length > 2) g = g.slice(0, 2);
     q._g = g;
     return g;
@@ -101,8 +106,11 @@
   const MAT_LIST = [
     { id: "wood", name: "木材", icon: "🌲" }, { id: "stone", name: "石材", icon: "⛰️" },
     { id: "shell", name: "貝殼", icon: "🐚" }, { id: "flower", name: "花種", icon: "🌸" }, { id: "star", name: "星砂", icon: "✨" },
+    { id: "bamboo", name: "竹簡", icon: "📜" }, { id: "glass", name: "琉璃", icon: "💎" },
+    { id: "redpaper", name: "紅紙", icon: "🧧" }, { id: "poem", name: "詩箋", icon: "📝" },
   ];
-  const MAT_OF = { 字音: "wood", 字形: "stone", 字義: "shell", 成語: "flower" };
+  const MAT_OF = { 字音: "wood", 字形: "stone", 字義: "shell", 成語: "flower", 六書: "bamboo", 字體書法: "bamboo",
+    標點: "glass", 語法: "glass", 語病詞語: "glass", 應用文: "redpaper", 文化常識: "poem" };
   const MAT_N = { 字卡: 1, 比對: 2, 情境: 3, 會考: 4 };
   function gainMat(q, before, wasEsc) {
     const got = {};
@@ -110,7 +118,7 @@
     if (before) n = Math.ceil(n / 2);
     if (wasEsc) n += 1;
     got[MAT_OF[q.kind] || "wood"] = n;
-    if (q.tier === "會考" && !before) got.star = 1;
+    if (EXAM(q) && !before) got.star = 1;
     S.mat ||= {};
     for (const [k, v] of Object.entries(got)) {
       S.mat[k] = (S.mat[k] || 0) + v;
@@ -125,6 +133,12 @@
     toast: (m) => toast(m),
     go: (tab) => show(tab),
     power: () => totalPower(),
+    quests: () => QUESTS,
+    gainMat(got) {
+      S.mat ||= {};
+      for (const [k, v] of Object.entries(got)) S.mat[k] = (S.mat[k] || 0) + v;
+    },
+    addCoins(n) { S.coins += n; refreshTop(); },
     residents(n) {
       const ids = Object.keys(S.got).filter((id) => BY_ID[id]).slice(-n);
       return ids.map((id) => ({ ch: [...glyphOf(BY_ID[id]).replace(/[ㄅ-ㄩˊˇˋ˙\s]/g, "")][0] || "字", color: TIER_COLOR[TIERS[BY_ID[id].tier].cls] }));
@@ -135,7 +149,7 @@
     const groups = {};
     for (const q of BANK) {
       if (!EXAM(q)) continue;
-      (groups[`${q.year} 會考`] ||= []).push(q.id);
+      (groups[`${q.year} ${q.srcType}`] ||= []).push(q.id);
     }
     return Object.entries(groups)
       .sort((a, b) => b[0].localeCompare(a[0], "zh-Hant", { numeric: true }))
@@ -426,6 +440,7 @@
 
   function endRun(silent) {
     run.done = true;
+    if (run.log.length >= 5) S.questTick = (S.questTick || 0) + 1;   // 採集滿 5 隻，島上多一張委託
     save();
     if (silent) return;
     const p = totalPower();
@@ -588,7 +603,7 @@
   function renderMe() {
     const p = totalPower(), r = rankOf(p);
     const nGot = Object.keys(S.got).length, nEsc = Object.keys(S.esc).length;
-    const bars = ["字音", "字形", "字義", "成語"].map((k) => {
+    const bars = ["字音", "字形", "字義", "成語", "六書", "字體書法", "標點", "語法", "語病詞語", "應用文", "文化常識"].map((k) => {
       const s = S.stats[k] || { a: 0, c: 0 };
       const pct = s.a ? Math.round((s.c / s.a) * 100) : 0;
       return `<div class="bar"><span>${k}</span><span class="track"><span class="fill" style="width:${pct}%"></span></span><span>${s.a ? pct + "%（" + s.a + "題）" : "還沒作答"}</span></div>`;
@@ -638,6 +653,7 @@
     .then((r) => r.json())
     .then((d) => {
       BANK = d.questions;
+      QUESTS = d.quests || [];
       if (d.tiers) TIERS = d.tiers;
       if (d.edition) EDITION = d.edition;
       setupTierUI();
@@ -645,8 +661,8 @@
       const c = {};
       for (const q of BANK) c[q.tier] = (c[q.tier] || 0) + 1;
       $("#credits").innerHTML =
-        `題庫共 ${BANK.length} 題：會考真題 ${c.會考 || 0} 題，題目取自國中教育會考公布之歷屆試題，解析為本站自行撰寫；` +
-        `其餘 ${BANK.length - (c.會考 || 0)} 題是把形音義、詞成語知識點重新組合出的新題，例句為改寫，解析由程式依知識點產生。`;
+        `題庫共 ${BANK.length} 題：會考、基測真題 ${c.會考 || 0} 題，題目取自國中教育會考與國中基測公布之歷屆試題，答案依心測中心參考答案，解析為本站自行撰寫；` +
+        `其餘 ${BANK.length - (c.會考 || 0)} 題是把形音義、詞成語與基礎語文知識點重新組合出的新題，例句為改寫，解析由程式依知識點產生。`;
       show("island");
     })
     .catch(() => { document.querySelector("main").innerHTML = '<div class="card">題庫載入失敗，請重新整理。</div>'; });

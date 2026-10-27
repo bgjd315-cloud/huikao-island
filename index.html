@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 <header class="top">
@@ -39,15 +39,18 @@
       <div class="is-rate" id="is-rate"></div>
       <div class="hidden" id="is-panel">
         <p class="small" id="is-hint"></p>
+        <div class="pal-cats" id="is-cats"></div>
         <div class="palette" id="is-palette"></div>
       </div>
     </div>
+    <div class="quests" id="is-quests"></div>
     <div class="row is-actions">
       <button class="primary wide" id="is-go">去採集建材</button>
       <button class="wide" id="is-build">建造</button>
     </div>
     <div class="card small muted">
-      答題採集建材：字音林 🌲木材、字形山 ⛰️石材、字義海 🐚貝殼、成語谷 🌸花種；會考神殿的真題第一次答對，另得 ✨星砂。
+      答題採集建材：字音林 🌲木材、字形山 ⛰️石材、字義海 🐚貝殼、成語谷 🌸花種、文字遺跡 📜竹簡、文句工坊 💎琉璃、禮俗市集 🧧紅紙、詩詞亭 📝詩箋；
+      會考、基測真題第一次答對，另得 ✨星砂。島民會來委託你幫忙（送匾額、貼春聯、寫信……），答對有額外獎勵。
       題目越難給越多，連續答對、追回逃走的字靈也有加成。收服的字靈會搬到島上散步。
     </div>
   </section>
@@ -124,7 +127,7 @@
     <div class="card">
       <div class="dexstat" id="dex-stat"></div>
       <div class="row wrap">
-        <select id="d-kind"><option value="">全部類別</option><option>字音</option><option>字形</option><option>字義</option><option>成語</option></select>
+        <select id="d-kind"><option value="">全部類別</option><option>字音</option><option>字形</option><option>字義</option><option>成語</option><option>六書</option><option>字體書法</option><option>標點</option><option>語法</option><option>語病詞語</option><option>應用文</option><option>文化常識</option></select>
         <select id="d-tier"></select>
         <select id="d-show"><option value="all">全部</option><option value="got">已收服</option><option value="esc">逃走名單</option></select>
       </div>
@@ -162,7 +165,7 @@
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
 </script>
-<script src="js/game.js?v=10"></script>
-<script type="module" src="js/island.js?v=4"></script>
+<script src="js/game.js?v=12"></script>
+<script type="module" src="js/island.js?v=6"></script>
 </body>
 </html>

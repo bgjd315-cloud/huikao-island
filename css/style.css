@@ -234,3 +234,20 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
   .pal span{font-size:.7rem}
   .pal .pic{width:34px; height:34px}
 }
+
+/* 建造工具列分類 */
+.pal-cats{display:flex; gap:4px; overflow-x:auto; margin-bottom:.4rem}
+.pal-cats button{font-size:.8rem; padding:.2em .7em; border-radius:999px; white-space:nowrap}
+.pal-cats button.cur{background:var(--ink); color:var(--surface)}
+/* 島民委託 */
+.quests{display:grid; gap:8px; margin-bottom:.8rem}
+.quest{display:flex; gap:.6rem; align-items:center; text-align:left; padding:.5rem .7rem; border-radius:14px}
+.quest > span{display:flex; flex-direction:column; gap:2px}
+.qtitle{font-size:.9rem}
+.qrew{font-size:.8rem; color:var(--muted)}
+.qnpc{width:52px; height:52px; object-fit:contain; flex:none}
+.qnpc.emo{font-size:38px; line-height:52px; text-align:center}
+.qnpc.big{width:84px; height:84px}
+.qnpc.big.emo{font-size:60px; line-height:84px}
+.qhost{display:flex; gap:.8rem; align-items:center; margin-bottom:.6rem}
+.qhost p{margin:.2rem 0 0}
