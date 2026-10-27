@@ -199,6 +199,7 @@
     const map = { island: "#v-island", hunt: "#v-hunt", dex: "#v-dex", shop: "#v-shop", me: "#v-me", enc: "#v-enc", sum: "#v-sum" };
     $(map[tab]).classList.remove("hidden");
     if (tab === "island") { if (window.HKIsland) window.HKIsland.show(); else window.__islandPending = true; }
+    if (window.HKMusic) window.HKMusic.scene(["hunt", "enc", "sum"].includes(tab) ? "hunt" : "island");
     if (tab === "hunt") renderGrounds();
     if (tab === "dex") renderDex();
     if (tab === "shop") renderShop();
@@ -419,6 +420,7 @@
       cls = "no";
       $("#stage").classList.add("fled");
     }
+    if (window.HKMusic) window.HKMusic.sfx(full ? "ok" : "no");
     gain = Math.round(gain);
     S.coins += gain;
     run.coins += gain;

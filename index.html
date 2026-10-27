@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=16">
+<link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
 <header class="top">
@@ -15,6 +15,7 @@
   <div class="purse">
     <span title="銅錢"><i class="coin"></i><b id="coins">0</b></span>
     <span title="戰力">戰力 <b id="power">0</b></span>
+    <button class="ghost music-btn" id="music-btn" onclick="HKMusic.toggle()" title="關閉音樂">🔊</button>
   </div>
 </header>
 <p class="rank" id="rank"></p>
@@ -187,8 +188,9 @@
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
 </script>
-<script src="js/game.js?v=13"></script>
-<script src="js/story.js?v=5"></script>
-<script type="module" src="js/island.js?v=8"></script>
+<script src="js/music.js?v=1"></script>
+<script src="js/game.js?v=14"></script>
+<script src="js/story.js?v=7"></script>
+<script type="module" src="js/island.js?v=9"></script>
 </body>
 </html>

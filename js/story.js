@@ -53,7 +53,7 @@
       ],
       goals: [goal.got(10, K.音, "字音林的"), goal.build("hut", 1, "蓋一間小木屋")],
       boss: { id: "b1", name: "走音妖", kinds: K.音, hp: 5, emoji: "👻",
-        lines: [["foe", "嘿嘿嘿，讀ㄐㄧㄥ還是ㄌㄧㄤˋ？我把每個字的聲調都扭歪啦！"], ["otter", "就是牠！島主，把正確的讀音唸給牠聽！"]] },
+        lines: [["foe", "嘿嘿嘿，讀ㄐㄧㄥ還是ㄌㄧㄤˋ？我把每個字的讀音都扭歪啦！"], ["otter", "就是牠！島主，把正確的讀音唸給牠聽！"]] },
       outro: [
         ["otter", "走音妖逃走了！剛出爐的麵包香，終於又飄滿整座島啦～"],
         ["otter", "我決定搬來這裡住！以後島主來店裡，麵包都算你半價！"],
@@ -67,7 +67,7 @@
         ["bear", "可是你看這塊路牌，「再接再勵」、「迫不急待」……字都寫錯了！我看了頭好痛。"],
         ["crane", "是「錯字妖」。牠躲在字形山，專門把同音、形近的字偷偷調包。"],
         ["bear", "島主，你去字形山把字找回來；我呢，幫你把島擴大一點，至少要有 20 格地才夠我施工！"],
-        ["crane", "提醒：再接再「厲」的厲是磨刀石，迫不「及」待的及是趕上。先想意思，再選字。"],
+        ["crane", "提醒：再接再「厲」的厲同「礪」，是磨利（公雞相鬥前先磨嘴）；迫不「及」待的及是趕上。先想意思，再選字。"],
       ],
       goals: [goal.got(10, K.形, "字形山的"), goal.land(20)],
       boss: { id: "b2", name: "錯字妖", kinds: K.形, hp: 5, emoji: "👺",
@@ -244,6 +244,7 @@
       }
       s.ch++;
       G.save();
+      if (window.HKMusic) window.HKMusic.sfx("chapter");
       const got = Object.entries(c.reward).map(([k, v]) => `${MAT[k]} +${v}`).join("　");
       alertBox(`<h3>${c.title}　完成！</h3><p>章節獎勵：${got}</p>` +
         (c.move ? `<p>${face(c.move, "st-face")} ${NAMES[c.move]}搬到島上住了！</p>` : "") +
@@ -309,6 +310,7 @@
     const qs = G.pick(b.kinds, b.hp + 6, b.exam);
     if (qs.length < b.hp) { G.toast("題目不夠，先去採集吧"); return; }
     const bt = { b, c, qs, i: 0, hp: b.hp, hearts: 3, locked: false };
+    if (window.HKMusic) window.HKMusic.scene("boss");
     $("#boss").classList.remove("hidden");
     $("#boss-name").textContent = b.name;
     $("#boss-img").innerHTML = `<img src="assets/boss/${BOSS_IMG[b.id]}.webp" alt="${b.emoji}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'boss-emo',textContent:this.alt}))">`;
@@ -337,6 +339,7 @@
       else if (+btn.dataset.i === i) btn.classList.add("wrong");
     }
     if (ok) bt.hp--; else bt.hearts--;
+    if (window.HKMusic) window.HKMusic.sfx(ok ? "ok" : "no");
     $("#boss-img").classList.remove("hit", "shake");
     void $("#boss-img").offsetWidth;
     $("#boss-img").classList.add(ok ? "hit" : "shake");
@@ -356,15 +359,17 @@
   }
   function win(bt) {
     $("#boss").classList.add("hidden");
+    if (window.HKMusic) { window.HKMusic.sfx("win"); window.HKMusic.scene("island"); }
     st().boss[bt.b.id] = 1;
     G.save();
     alertBox(`<h3>打敗${bt.b.name}！</h3><p>剩下 ${"❤️".repeat(bt.hearts)}，好厲害！</p><p>回到劇情卡，按「完成這一章」看結局。</p>`, renderCard);
   }
   function lose(bt) {
     $("#boss").classList.add("hidden");
+    if (window.HKMusic) window.HKMusic.scene("island");
     alertBox(`<h3>${bt.b.name}還在……</h3><p>沒關係，先去採集練習，準備好再來挑戰。Boss 戰可以一直重來。</p>`, renderCard);
   }
-  $("#boss-quit").addEventListener("click", () => { $("#boss").classList.add("hidden"); renderCard(); });
+  $("#boss-quit").addEventListener("click", () => { $("#boss").classList.add("hidden"); if (window.HKMusic) window.HKMusic.scene("island"); renderCard(); });
 
   // ---------- 小視窗 ----------
   function alertBox(html, after) {

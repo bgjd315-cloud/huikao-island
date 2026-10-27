@@ -616,6 +616,7 @@ function tapCell(x, z) {
     const it = ITEM[building];
     if (!afford(it.cost)) return G.toast("建材不夠，去答題採集吧");
     pay(it.cost);
+    if (window.HKMusic) window.HKMusic.sfx("build");
     if (building === "land") I.land.push(k);
     else I.objs[k] = { t: building, r: 0 };
   }
@@ -748,6 +749,7 @@ function openQuest(q) {
 function answerQuest(q, oi) {
   const { S } = questState();
   const ok = oi === q.answer;
+  if (window.HKMusic) window.HKMusic.sfx(ok ? "ok" : "no");
   for (const b of $("#mbody").querySelectorAll(".opt")) {
     b.disabled = true;
     if (+b.dataset.oi === q.answer) b.classList.add("right");

@@ -301,3 +301,5 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
   .goals li{grid-template-columns:1fr auto; row-gap:2px}
   .goals .prog{grid-column:1 / -1; grid-row:2}
 }
+
+.music-btn{font-size:1.1rem; padding:.1em .45em; border-radius:999px; line-height:1}
