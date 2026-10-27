@@ -492,13 +492,16 @@ function spawnResidents() {
     img.onload = () => {
       const cv = document.createElement("canvas");
       cv.width = 256; cv.height = 338;
-      cv.getContext("2d").drawImage(img, 0, 0, 256, 338);
+      // 等比例縮放、腳貼底
+      const k = Math.min(256 / img.width, 338 / img.height), w = img.width * k, h = img.height * k;
+      cv.getContext("2d").drawImage(img, (256 - w) / 2, 338 - h, w, h);
       const tex = new THREE.CanvasTexture(cv);
       tex.colorSpace = THREE.SRGBColorSpace;
       s.material.map = tex;
       s.material.needsUpdate = true;
     };
-    img.src = window.HKAvatar.dataUrl();
+    img.onerror = () => { img.onerror = null; img.src = window.HKAvatar.svgUrl(); };   // Gemini 圖還沒到就用 SVG
+    img.src = window.HKAvatar.imgUrl();
     s.scale.set(0.95, 1.25, 1);
     const k = free[Math.floor(Math.random() * free.length)];
     const [px, pz] = pos(...unkey(k));

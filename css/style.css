@@ -333,3 +333,18 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
 }
 
 .av-items small .coin{width:.85em; height:.85em; vertical-align:-.1em}
+
+/* 島主整套造型 */
+.avi{position:relative; display:inline-block; vertical-align:bottom}
+.avi > svg{position:absolute; inset:0; width:100%; height:100%}
+.avi > img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:50% 100%; opacity:0}
+.avi > img.ok{opacity:1}
+.avi:has(> img.ok) > svg{display:none}
+.av-looks{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:8px}
+.av-looks button{display:flex; flex-direction:column; align-items:center; gap:2px; padding:.35em; border-radius:12px; font-size:.85rem}
+.av-looks button.cur{outline:3px solid var(--r2); background:color-mix(in srgb, var(--r2) 12%, var(--surface))}
+.av-looks button.locked{opacity:.8; border-style:dashed}
+.av-looks small{font-size:.72rem; color:var(--muted)}
+.av-mini .avi{margin-top:-1px}
+.st-big.av-face .avi{width:120px !important; height:158px !important; margin-top:-80px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+@media (max-width:560px){ .st-big.av-face .avi{width:84px !important; height:111px !important; margin-top:-56px} }

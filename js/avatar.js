@@ -1,5 +1,5 @@
-/* 會考造島記：島主形象。用 SVG 即時畫 Q 版島主，配件剛好對齊頭和手。
-   設定存在 S.avatar；擁有的配件存在 S.wardrobe（id: 1）。配件用銅錢在衣櫥購買，部分由故事章節贈送。 */
+/* 會考造島記：島主形象。6 種形象 × 8 套整套造型，圖由 Gemini 繪製（assets/avatar/形象_造型.webp）；
+   圖還沒放進來時，用程式畫的 SVG 版本頂替。設定存在 S.avatar {name, sp, look}；買到的造型存在 S.looks。 */
 (() => {
   "use strict";
   const $ = (s) => document.querySelector(s);
@@ -175,94 +175,121 @@
     const s = size || 200;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -24 200 264" width="${s}" height="${Math.round(s * 1.32)}">${L.join("")}</svg>`;
   }
-  const dataUrl = (c) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg(c, 256));
+  const svgUrl = (c) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg(c, 256));
+
+  // ---------- 整套造型（Gemini 圖：assets/avatar/形象_造型.webp；圖還沒到時用上面的 SVG 頂替） ----------
+  const KINDS = [
+    { id: "boy", name: "男孩", svg: { sp: "kid", hair: "short", hc: 0, skin: 0 } },
+    { id: "girl", name: "女孩", svg: { sp: "kid", hair: "long", hc: 0, skin: 0 } },
+    { id: "cat", name: "小貓", svg: { sp: "cat", fur: 0 } },
+    { id: "fox", name: "小狐狸", svg: { sp: "fox", fur: 0 } },
+    { id: "rabbit", name: "小兔", svg: { sp: "rabbit", fur: 0 } },
+    { id: "panda", name: "熊貓", svg: { sp: "panda", fur: 0 } },
+  ];
+  const LOOKS = [
+    { id: "daily", name: "日常", free: true, svg: { outfit: "tee", oc: 4 } },
+    { id: "student", name: "學生", free: true, svg: { outfit: "school", oc: 8, back: "bag" } },
+    { id: "fishing", name: "夏日釣客", price: 150, svg: { outfit: "overall", oc: 3, hat: "strawhat", hand: "rod" } },
+    { id: "scholar", name: "小書生", price: 300, svg: { outfit: "robe", oc: 3, hat: "scholar", hand: "brush" } },
+    { id: "baker", name: "麵包師", ch: "c1", svg: { outfit: "tee", oc: 7, hat: "chef" } },
+    { id: "carpenter", name: "小木匠", ch: "c2", svg: { outfit: "overall", oc: 1, hat: "helmet", hand: "hammer" } },
+    { id: "newyear", name: "新年唐裝", ch: "c6", svg: { outfit: "robe", oc: 0, hand: "lantern" } },
+    { id: "zhuangyuan", name: "狀元郎", ch: "c8", svg: { outfit: "robe", oc: 0, hat: "zhuangyuan" } },
+  ];
+  const LOOK = Object.fromEntries(LOOKS.map((l) => [l.id, l]));
+  const KIND = Object.fromEntries(KINDS.map((k) => [k.id, k]));
+
+  function me() {
+    const S = G().state();
+    let a = S.avatar;
+    if (a && !a.look) {   // 舊版（自由搭配）的存檔轉成整套造型
+      const sp = a.sp === "kid" ? (["long", "twin", "bun"].includes(a.hair) ? "girl" : "boy") : KIND[a.sp] ? a.sp : "boy";
+      a = S.avatar = { name: a.name || "島主", sp, look: "daily" };
+      G().save();
+    }
+    return a || { name: "島主", sp: "boy", look: "daily" };
+  }
+  const svgCfg = (sp, look) => ({ name: "", skin: 0, hc: 0, fur: 0, ...(KIND[sp] || KINDS[0]).svg, ...(LOOK[look] || LOOKS[0]).svg });
+  const imgUrl = (sp, look) => `assets/avatar/${sp}_${look}.webp`;
+  function ownsLook(id) {
+    const L = LOOK[id];
+    if (!L) return false;
+    if (L.free) return true;
+    const S = G().state();
+    return !!(S.looks && S.looks[id]);
+  }
+  // 頭像 HTML：先放 SVG，Gemini 圖載入成功就蓋過去
+  function pic(sp, look, w) {
+    const h = Math.round(w * 1.32);
+    return `<span class="avi" style="width:${w}px;height:${h}px">${svg(svgCfg(sp, look), w)}` +
+      `<img src="${imgUrl(sp, look)}" alt="" onload="this.classList.add('ok')" onerror="this.remove()"></span>`;
+  }
+  const html = (w) => { const a = me(); return pic(a.sp, a.look, w); };
 
   // ---------- 衣櫥 ----------
-  function save(c) {
-    const S = G().state();
-    S.avatar = c;
+  function save(a) {
+    G().state().avatar = a;
     G().save();
     refreshHeader();
     if (window.HKIsland) window.HKIsland.refresh();
   }
   function grantChapter(chId) {
     const S = G().state();
-    S.wardrobe ||= {};
-    const got = ITEMS.filter((i) => i.ch === chId && !S.wardrobe[i.id]);
-    for (const i of got) S.wardrobe[i.id] = 1;
+    S.looks ||= {};
+    const got = LOOKS.filter((l) => l.ch === chId && !S.looks[l.id]);
+    for (const l of got) S.looks[l.id] = 1;
     if (got.length) G().save();
-    return got.map((i) => i.name);
+    return got.map((l) => l.name + "造型");
   }
-  function syncChapters() {   // 舊存檔：已完成的章節補發配件
+  function syncChapters() {   // 已完成的章節補發造型
     const done = (G().state().story || {}).done || {};
     for (const ch of Object.keys(done)) grantChapter(ch);
   }
-  function swatches(list, cur, key) {
-    return `<div class="sw">${list.map((col, i) => `<button class="swc ${i === cur ? "cur" : ""}" data-k="${key}" data-v="${i}" style="background:${col}" aria-label="顏色 ${i + 1}"></button>`).join("")}</div>`;
-  }
-  function chips(list, cur, key) {
-    return `<div class="chips">${list.map((o) => `<button class="${o.id === cur ? "cur" : ""}" data-k="${key}" data-v="${o.id}">${o.name}</button>`).join("")}</div>`;
-  }
   function render(box, opt = {}) {
-    const c = cfg(), S = G().state();
     syncChapters();
-    const animal = c.sp !== "kid";
-    const furList = FUR[c.sp] || [];
-    let h = `<div class="av-wrap"><div class="av-prev">${svg(c, 180)}</div><div class="av-ctl">` +
-      `<label class="av-name">島主名字 <input id="av-name" maxlength="8" value="${(c.name || "").replace(/"/g, "")}"></label>` +
-      `<h4>形象</h4><div class="av-sp">${SPECIES.map((sp) => `<button class="${sp.id === c.sp ? "cur" : ""}" data-k="sp" data-v="${sp.id}">${svg({ ...c, sp: sp.id, hat: null, glasses: null, hand: null, back: null, fur: 0 }, 54)}<span>${sp.name}</span></button>`).join("")}</div>` +
-      (animal ? `<h4>毛色</h4>${swatches(furList, c.fur % furList.length, "fur")}` :
-        `<h4>膚色</h4>${swatches(SKIN, c.skin, "skin")}<h4>髮型</h4>${chips(HAIR, c.hair, "hair")}<h4>髮色</h4>${swatches(HAIR_C, c.hc, "hc")}`) +
-      `<h4>服裝</h4>${chips(OUTFIT, c.outfit, "outfit")}${swatches(CLOTH, c.oc, "oc")}`;
+    const a = me(), S = G().state();
+    let h = `<div class="av-wrap"><div class="av-prev">${pic(a.sp, a.look, 180)}</div><div class="av-ctl">` +
+      `<label class="av-name">島主名字 <input id="av-name" maxlength="8" value="${(a.name || "").replace(/"/g, "")}"></label>` +
+      `<h4>形象</h4><div class="av-sp">${KINDS.map((k) => `<button class="${k.id === a.sp ? "cur" : ""}" data-k="sp" data-v="${k.id}">${pic(k.id, "daily", 58)}<span>${k.name}</span></button>`).join("")}</div>`;
     if (!opt.first) {
-      for (const [slot, label] of SLOTS) {
-        h += `<h4>${label}</h4><div class="av-items"><button class="${!c[slot] ? "cur" : ""}" data-k="${slot}" data-v="">不戴</button>` +
-          ITEMS.filter((i) => i.slot === slot).map((i) => {
-            const own = owned(i.id);
-            const tag = own ? "" : i.ch ? `<small>${CH_NAME[i.ch]}獎勵</small>` : `<small><i class="coin"></i>${i.price}</small>`;
-            return `<button class="${c[slot] === i.id ? "cur" : ""} ${own ? "" : "locked"}" data-k="${slot}" data-v="${i.id}">${i.name}${tag}</button>`;
-          }).join("") + `</div>`;
-      }
-      h += `<p class="muted small">配件用銅錢購買（目前 ${S.coins} 銅錢），有些是故事章節的紀念品。</p>`;
+      h += `<h4>造型</h4><div class="av-looks">${LOOKS.map((l) => {
+        const own = ownsLook(l.id);
+        const tag = own ? "" : l.ch ? `<small>${CH_NAME[l.ch]}獎勵</small>` : `<small><i class="coin"></i>${l.price}</small>`;
+        return `<button class="${l.id === a.look ? "cur" : ""} ${own ? "" : "locked"}" data-k="look" data-v="${l.id}">${pic(a.sp, l.id, 70)}<span>${l.name}</span>${tag}</button>`;
+      }).join("")}</div><p class="muted small">造型用銅錢購買（目前 ${S.coins} 銅錢），有些是故事章節的紀念品。買過的造型，換任何形象都能穿。</p>`;
     } else {
-      h += `<p class="muted small">之後可以在「島主」分頁換裝，買帽子、眼鏡等配件。</p><button class="primary wide" id="av-done">就是我了，出發！</button>`;
+      h += `<p class="muted small">之後可以在「島主」分頁換造型：夏日釣客、小書生、麵包師、狀元郎……</p><button class="primary wide" id="av-done">就是我了，出發！</button>`;
     }
     box.innerHTML = h + `</div></div>`;
-    // 預覽固定在分頁列下方，往下挑配件時也看得到
     const tabs = document.querySelector(".tabs");
     if (!opt.first && tabs) box.querySelector(".av-prev").style.top = tabs.offsetHeight + 4 + "px";
-    box.querySelector("#av-name").addEventListener("change", (e) => { const n = cfg(); n.name = e.target.value.trim() || "島主"; save(n); });
+    box.querySelector("#av-name").addEventListener("change", (e) => save({ ...me(), name: e.target.value.trim() || "島主" }));
     for (const b of box.querySelectorAll("[data-k]")) b.addEventListener("click", () => pick(box, opt, b.dataset.k, b.dataset.v));
     if (opt.first) box.querySelector("#av-done").addEventListener("click", () => {
-      const n = cfg();
-      n.name = box.querySelector("#av-name").value.trim() || "島主";
-      save(n);
+      save({ ...me(), name: box.querySelector("#av-name").value.trim() || "島主" });
       opt.done && opt.done();
     });
   }
   function pick(box, opt, k, v) {
-    const c = { ...cfg() };
-    if (["hat", "glasses", "hand", "back"].includes(k) && v) {
-      const it = ITEM[v];
-      if (!owned(v)) {
-        if (it.ch) { G().toast(`完成${CH_NAME[it.ch]}就會得到${it.name}`); return; }
-        const S = G().state();
-        if (S.coins < it.price) { G().toast(`銅錢不夠：${it.name}要 ${it.price} 銅錢`); return; }
-        if (!confirm(`用 ${it.price} 銅錢買「${it.name}」嗎？`)) return;
-        G().spend(it.price);
-        S.wardrobe ||= {};
-        S.wardrobe[v] = 1;
-        if (window.HKMusic) window.HKMusic.sfx("build");
-      }
+    const a = { ...me() };
+    if (k === "look" && !ownsLook(v)) {
+      const L = LOOK[v], S = G().state();
+      if (L.ch) { G().toast(`完成${CH_NAME[L.ch]}就會得到「${L.name}」造型`); return; }
+      if (S.coins < L.price) { G().toast(`銅錢不夠：「${L.name}」要 ${L.price} 銅錢`); return; }
+      if (!confirm(`用 ${L.price} 銅錢買「${L.name}」造型嗎？`)) return;
+      G().spend(L.price);
+      S.looks ||= {};
+      S.looks[v] = 1;
+      if (window.HKMusic) window.HKMusic.sfx("build");
     }
-    c[k] = ["skin", "hc", "fur", "oc"].includes(k) ? +v : v || null;
-    if (k === "sp") c.fur = 0;
-    save(c);
+    a[k] = v;
+    if (opt.first) a.name = box.querySelector("#av-name").value.trim() || a.name;
+    save(a);
     render(box, opt);
   }
   function refreshHeader() {
     const el = $("#av-mini");
-    if (el) el.innerHTML = svg(cfg(), 34);
+    if (el) el.innerHTML = html(34);
   }
   function first(done) {
     $("#mbody").innerHTML = `<h3>建立你的島主</h3><div id="av-first"></div>`;
@@ -270,6 +297,12 @@
     render($("#av-first"), { first: true, done: () => { $("#modal").classList.add("hidden"); done && done(); } });
   }
 
-  window.HKAvatar = { svg, dataUrl, cfg, render, first, grantChapter, refreshHeader, has: () => !!G().state().avatar,
-    name: () => cfg().name || "島主", ITEMS };
+  window.HKAvatar = {
+    html, first, render, grantChapter, refreshHeader,
+    has: () => !!G().state().avatar,
+    name: () => me().name || "島主",
+    imgUrl: () => imgUrl(me().sp, me().look),
+    svgUrl: () => svgUrl(svgCfg(me().sp, me().look)),
+    LOOKS,
+  };
 })();
