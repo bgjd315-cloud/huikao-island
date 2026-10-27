@@ -242,12 +242,14 @@
         G.gainMat(c.reward);
         if (c.move && !s.moved.includes(c.move)) s.moved.push(c.move);
       }
+      const gifts = window.HKAvatar ? window.HKAvatar.grantChapter(c.id) : [];
       s.ch++;
       G.save();
       if (window.HKMusic) window.HKMusic.sfx("chapter");
       const got = Object.entries(c.reward).map(([k, v]) => `${MAT[k]} +${v}`).join("　");
       alertBox(`<h3>${c.title}　完成！</h3><p>章節獎勵：${got}</p>` +
         (c.move ? `<p>${face(c.move, "st-face")} ${NAMES[c.move]}搬到島上住了！</p>` : "") +
+        (gifts.length ? `<p>🎁 得到島主配件：<b>${gifts.join("、")}</b>（到「島主」分頁換上）</p>` : "") +
         (c.ending ? `<p><b>恭喜你完成全部主線！</b></p>` : `<p>下一章：<b>${CH[s.ch].title}</b></p>`), () => {
         if (window.HKIsland) window.HKIsland.refresh();
         renderCard();
@@ -277,9 +279,9 @@
   function step() {
     const [who, text] = scene.lines[scene.i];
     const boss = who === "boss", foe = who === "foe" && scene.foe;
-    $("#story-face").innerHTML = boss ? "" : foe ? `<img class="st-big" src="assets/boss/${foe.id}.webp" alt="${foe.emoji}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'st-big emo',textContent:this.alt}))">`
+    $("#story-face").innerHTML = boss ? "" : who === "me" && window.HKAvatar ? `<span class="st-big av-face">${window.HKAvatar.svg(null, 120)}</span>` : foe ? `<img class="st-big" src="assets/boss/${foe.id}.webp" alt="${foe.emoji}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'st-big emo',textContent:this.alt}))">`
       : who === "me" ? `<span class="st-big emo">🙂</span>` : face(who, "st-big");
-    $("#story-name").textContent = boss ? "" : foe ? foe.name : NAMES[who];
+    $("#story-name").textContent = boss ? "" : foe ? foe.name : who === "me" && window.HKAvatar ? window.HKAvatar.name() : NAMES[who];
     $("#story-text").textContent = text;
     $("#story-box").classList.toggle("narr", boss);
     $("#story-next").textContent = scene.i + 1 >= scene.lines.length ? "繼續" : "▼";
@@ -395,6 +397,7 @@
       文字遺跡📜竹簡、文句工坊💎琉璃、禮俗市集🧧紅紙、詩詞亭📝詩箋；會考、基測真題第一次答對另得✨星砂。</p>
       <p><b>🔨 建造</b>：按「建造」選建築，再點島上的格子。填海造陸讓島變大；碼頭、拱橋、帆船蓋在緊鄰陸地的海上。戰力夠了會解鎖高級建築。</p>
       <p><b>📮 委託</b>：島民會請你送匾額、配春聯、寫信……答對有紅紙、詩箋和銅錢。春聯委託答對，房子門口會貼上春聯。</p>
+      <p><b>🧑‍🎨 島主</b>：在「島主」分頁換形象（人類小孩、貓、狐狸、兔、熊、熊貓）、髮型、服裝，用銅錢買帽子、眼鏡、手持物、披風；有些配件是故事章節的紀念品。</p>
       <p><b>⚔️ Boss 戰</b>：你有 3 顆心。答對一題，墨妖扣一格血；答錯扣一顆心。輸了可以再挑戰。</p>
       <p><b>⭐ 小撇步</b>：連續答對銅錢加成；答錯的字靈會進「逃走名單」，到「追捕逃靈」抓回來還有加成。墨寶鋪可以買照妖鏡（刪一個錯誤選項）和定身符（答錯可再答一次）。</p>
       <p class="muted small">進度存在這台裝置的瀏覽器裡，換裝置前到「戰績」複製存檔碼。</p>
@@ -409,11 +412,16 @@
       if (!G.ready()) return;
       renderCard();
       const s = st();
-      if (!s.seen.c0 && !finished()) {
-        s.seen.c0 = 1;
-        G.save();
-        play(CH[0].intro, CH[0].bg, () => { renderCard(); help(); });
-      }
+      const prologue = () => {
+        if (!s.seen.c0 && !finished()) {
+          s.seen.c0 = 1;
+          G.save();
+          play(CH[0].intro, CH[0].bg, () => { renderCard(); help(); });
+        }
+      };
+      // 第一次進遊戲：先建立島主，再播序章
+      if (window.HKAvatar && !window.HKAvatar.has()) window.HKAvatar.first(() => { renderCard(); prologue(); });
+      else prologue();
     },
   };
 })();

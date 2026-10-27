@@ -79,9 +79,9 @@
     if (q._g) return q._g;
     let g = "";
     const pick = (text) => {
-      for (const m of String(text).matchAll(/「([^」]{1,6})」/g)) {
+      for (const m of String(text).matchAll(/「([^「」『』]{1,6})」/g)) {
         const x = m[1].trim();
-        if (x) return x;
+        if (x && /[㐀-鿿ㄅ-ㄩ□]/.test(x)) return x;   // 不取引號、標點等符號
       }
       return "";
     };
@@ -139,6 +139,7 @@
       for (const [k, v] of Object.entries(got)) S.mat[k] = (S.mat[k] || 0) + v;
     },
     addCoins(n) { S.coins += n; refreshTop(); },
+    spend(n) { S.coins -= n; save(); refreshTop(); },
     residents(n) {
       const ids = Object.keys(S.got).filter((id) => BY_ID[id]).slice(-n);
       return ids.map((id) => ({ ch: [...glyphOf(BY_ID[id]).replace(/[ㄅ-ㄩˊˇˋ˙\s]/g, "")][0] || "字", color: TIER_COLOR[TIERS[BY_ID[id].tier].cls] }));
@@ -196,12 +197,13 @@
   function show(tab) {
     for (const b of document.querySelectorAll(".tabs button")) b.classList.toggle("cur", b.dataset.tab === tab);
     for (const v of document.querySelectorAll(".view")) v.classList.add("hidden");
-    const map = { island: "#v-island", hunt: "#v-hunt", dex: "#v-dex", shop: "#v-shop", me: "#v-me", enc: "#v-enc", sum: "#v-sum" };
+    const map = { island: "#v-island", avatar: "#v-avatar", hunt: "#v-hunt", dex: "#v-dex", shop: "#v-shop", me: "#v-me", enc: "#v-enc", sum: "#v-sum" };
     $(map[tab]).classList.remove("hidden");
     if (tab === "island") { if (window.HKIsland) window.HKIsland.show(); else window.__islandPending = true; }
     if (window.HKMusic) window.HKMusic.scene(["hunt", "enc", "sum"].includes(tab) ? "hunt" : "island");
     if (tab === "hunt") renderGrounds();
     if (tab === "dex") renderDex();
+    if (tab === "avatar" && window.HKAvatar) window.HKAvatar.render($("#av-box"));
     if (tab === "shop") renderShop();
     if (tab === "me") renderMe();
     refreshTop();
@@ -674,6 +676,7 @@
       if (d.edition) EDITION = d.edition;
       setupTierUI();
       for (const q of BANK) BY_ID[q.id] = q;
+      if (window.HKAvatar) window.HKAvatar.refreshHeader();
       const c = {};
       for (const q of BANK) c[q.tier] = (c[q.tier] || 0) + 1;
       $("#credits").innerHTML =

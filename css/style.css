@@ -303,3 +303,33 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
 }
 
 .music-btn{font-size:1.1rem; padding:.1em .45em; border-radius:999px; line-height:1}
+
+/* ---------- 島主 ---------- */
+.av-mini{width:40px; height:40px; padding:0; border-radius:50%; overflow:hidden; vertical-align:middle; margin-right:.35rem;
+  background:color-mix(in srgb, var(--r2) 14%, var(--surface)); border:2px solid var(--r2)}
+.av-mini svg{display:block; margin:-1px auto 0}
+.av-wrap{display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:start}
+.av-prev{position:sticky; top:8px; background:radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--r2) 16%, var(--surface)), var(--surface) 70%);
+  border-radius:18px; display:flex; justify-content:center; padding:8px}
+.av-ctl h4{margin:.8rem 0 .3rem; font-size:.95rem}
+.av-name input{font-size:1rem; padding:.3em .5em; border-radius:8px; border:1px solid var(--line); width:9em; margin-left:.3em}
+.av-sp{display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:6px}
+.av-sp button{display:flex; flex-direction:column; align-items:center; padding:.3em; border-radius:12px; font-size:.8rem}
+.av-sp button.cur, .chips button.cur, .av-items button.cur{outline:3px solid var(--r2); background:color-mix(in srgb, var(--r2) 12%, var(--surface))}
+.sw{display:flex; flex-wrap:wrap; gap:6px}
+.swc{width:30px; height:30px; border-radius:50%; border:2px solid var(--line); padding:0}
+.swc.cur{outline:3px solid var(--r2); outline-offset:2px}
+.chips, .av-items{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px}
+.chips button, .av-items button{padding:.3em .7em; border-radius:999px; font-size:.88rem; display:flex; gap:.3em; align-items:center}
+.av-items button small{font-size:.72rem; color:var(--muted)}
+.av-items button.locked{opacity:.75; border-style:dashed}
+.st-big.av-face svg{width:120px; height:158px; margin-top:-80px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+@media (max-width:560px){
+  .av-wrap{grid-template-columns:1fr}
+  .av-prev{position:sticky; top:0; z-index:3; padding:4px; box-shadow:0 4px 10px rgba(0,0,0,.06)}
+  .av-prev svg{width:110px; height:145px}
+  .av-mini{width:32px; height:32px}
+  .st-big.av-face svg{width:84px; height:111px; margin-top:-56px}
+}
+
+.av-items small .coin{width:.85em; height:.85em; vertical-align:-.1em}

@@ -7,11 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=17">
+<link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
 <header class="top">
-  <h1>會考造島記</h1>
+  <h1><button class="av-mini" id="av-mini" title="島主衣櫥" onclick="HKGame.go('avatar')"></button>會考造島記</h1>
   <div class="purse">
     <span title="銅錢"><i class="coin"></i><b id="coins">0</b></span>
     <span title="戰力">戰力 <b id="power">0</b></span>
@@ -23,6 +23,7 @@
 <nav class="tabs" role="tablist">
   <button data-tab="island" class="cur">我的島</button>
   <button data-tab="hunt">採集</button>
+  <button data-tab="avatar">島主</button>
   <button data-tab="dex">字靈圖鑑</button>
   <button data-tab="shop">墨寶鋪</button>
   <button data-tab="me">戰績</button>
@@ -124,6 +125,11 @@
     <div id="sum-list" class="review"></div>
   </section>
 
+  <!-- 島主衣櫥 -->
+  <section id="v-avatar" class="view hidden">
+    <div class="card"><h2 class="sec" style="margin-top:0">島主衣櫥</h2><div id="av-box"></div></div>
+  </section>
+
   <!-- 圖鑑 -->
   <section id="v-dex" class="view hidden">
     <div class="card">
@@ -189,8 +195,9 @@
                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
 </script>
 <script src="js/music.js?v=1"></script>
-<script src="js/game.js?v=14"></script>
-<script src="js/story.js?v=7"></script>
-<script type="module" src="js/island.js?v=9"></script>
+<script src="js/avatar.js?v=3"></script>
+<script src="js/game.js?v=15"></script>
+<script src="js/story.js?v=9"></script>
+<script type="module" src="js/island.js?v=10"></script>
 </body>
 </html>

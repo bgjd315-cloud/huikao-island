@@ -485,6 +485,27 @@ function spawnResidents() {
     scene.add(s);
     residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6, y: 0.4 });
   }
+  // 島主自己：SVG 畫成貼圖，在島上散步
+  if (window.HKAvatar) {
+    const img = new Image();
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true }));
+    img.onload = () => {
+      const cv = document.createElement("canvas");
+      cv.width = 256; cv.height = 338;
+      cv.getContext("2d").drawImage(img, 0, 0, 256, 338);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      s.material.map = tex;
+      s.material.needsUpdate = true;
+    };
+    img.src = window.HKAvatar.dataUrl();
+    s.scale.set(0.95, 1.25, 1);
+    const k = free[Math.floor(Math.random() * free.length)];
+    const [px, pz] = pos(...unkey(k));
+    s.position.set(px, 0.58, pz);
+    scene.add(s);
+    residents.push({ s, to: s.position.clone(), wait: 1, phase: 0, y: 0.58 });
+  }
   // 劇情中入住的島民：用立繪當看板，比字靈大一點
   const moved = (G.state().story && G.state().story.moved) || [];
   for (const id of moved) {
