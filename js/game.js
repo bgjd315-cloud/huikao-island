@@ -143,6 +143,20 @@
       const ids = Object.keys(S.got).filter((id) => BY_ID[id]).slice(-n);
       return ids.map((id) => ({ ch: [...glyphOf(BY_ID[id]).replace(/[ㄅ-ㄩˊˇˋ˙\s]/g, "")][0] || "字", color: TIER_COLOR[TIERS[BY_ID[id].tier].cls] }));
     },
+    // 劇情用：已收服幾隻（可限定類別、只算真題）
+    countGot(kinds, examOnly) {
+      return Object.keys(S.got).filter((id) => {
+        const q = BY_ID[id];
+        return q && (!kinds || kinds.includes(q.kind)) && (!examOnly || EXAM(q));
+      }).length;
+    },
+    // 劇情 Boss 戰用：依類別隨機抽題（單選、四個選項）
+    pick(kinds, n, examOnly) {
+      const pool = BANK.filter((q) => q.type === "single" && q.options.length === 4 &&
+        (!kinds || kinds.includes(q.kind)) && (!examOnly || EXAM(q)));
+      return shuffle(pool.slice()).slice(0, n);
+    },
+    ready: () => BANK.length > 0,
   };
 
   function badges() {

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>會考造島記・遊戲介紹</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F7F6; --surface:#FFFFFF; --ink:#1B2725; --muted:#566764; --line:#D5DEDB; --accent:#2E6C8C; --warm:#B2392C; --gold:#8C6A0E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1615; --surface:#16201E; --ink:#E3EBE9; --muted:#97A8A4; --line:#2A3835; --accent:#5DA5C9; --warm:#E8705F; --gold:#DDB349}}
+:root[data-theme="dark"]{--bg:#0E1615; --surface:#16201E; --ink:#E3EBE9; --muted:#97A8A4; --line:#2A3835; --accent:#5DA5C9; --warm:#E8705F; --gold:#DDB349}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:"Noto Sans TC",system-ui,sans-serif; line-height:1.75}
+.wrap{max-width:920px; margin:0 auto; padding:0 16px 48px}
+.hero{position:relative; border-radius:0 0 28px 28px; overflow:hidden; margin:0 -16px 28px}
+.hero img{display:block; width:100%; aspect-ratio:16/8; object-fit:cover}
+.hero .t{position:absolute; inset:auto 0 0 0; padding:24px 20px 18px; background:linear-gradient(transparent, rgba(10,20,30,.78)); color:#fff}
+.hero h1{font-family:"Noto Serif TC",serif; font-weight:900; font-size:clamp(2rem,6vw,3.2rem); margin:0; letter-spacing:.06em}
+.hero p{margin:.2rem 0 0; font-size:clamp(.95rem,2.6vw,1.15rem); opacity:.95}
+h2{font-family:"Noto Serif TC",serif; font-size:1.5rem; margin:2.2rem 0 .8rem; padding-left:.6rem; border-left:6px solid var(--warm)}
+.lead{font-size:1.08rem}
+.cta{display:inline-block; margin:.6rem .4rem 0 0; padding:.7rem 1.4rem; border-radius:999px; background:var(--warm); color:#fff; text-decoration:none; font-weight:700}
+.cta.alt{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+.grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+.chap{display:flex; gap:12px; align-items:center}
+.chap img{width:64px; height:64px; object-fit:contain; flex:none}
+.chap b{display:block}
+.chap span{font-size:.9rem; color:var(--muted)}
+.ppl{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); text-align:center}
+.ppl img{width:100%; max-width:120px; aspect-ratio:1; object-fit:contain}
+.ppl b{display:block}
+.ppl span{font-size:.85rem; color:var(--muted)}
+.places{display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.place{position:relative; border-radius:14px; overflow:hidden; min-height:110px; color:#fff}
+.place img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.place div{position:relative; padding:10px 12px; background:linear-gradient(90deg, rgba(10,20,30,.72), rgba(10,20,30,.15)); min-height:110px}
+.place b{font-size:1.05rem}
+.place span{display:block; font-size:.85rem}
+.steps{counter-reset:s; list-style:none; padding:0; display:grid; gap:10px}
+.steps li{counter-increment:s; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px 12px 56px; position:relative}
+.steps li::before{content:counter(s); position:absolute; left:14px; top:12px; width:30px; height:30px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700}
+table{width:100%; border-collapse:collapse; background:var(--surface); border-radius:14px; overflow:hidden; font-size:.95rem}
+th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{background:color-mix(in srgb, var(--accent) 12%, var(--surface))}
+.icons{display:flex; flex-wrap:wrap; gap:8px}
+.icons span{display:flex; align-items:center; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:2px 10px 2px 4px; font-size:.9rem}
+.icons img{width:28px; height:28px; object-fit:contain}
+.note{color:var(--muted); font-size:.9rem}
+.tablewrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <img src="assets/scenes/s_ending.webp" onerror="this.src='assets/hero.webp'" alt="">
+    <div class="t"><h1>會考造島記</h1><p>答對一題，島就長大一點。國中會考國文・基礎語文知識練習遊戲</p></div>
+  </header>
+
+  <p class="lead">一場「墨潮」把<b>文字之島</b>沖得只剩一片沙洲，島上的字靈四散奔逃，老朋友們也漂流在海上。
+  你是漂流上岸的新島主——到各地答題收服字靈、帶回建材，把島一格一格蓋回來，再打敗墨潮留下的墨妖，讓島民一個個搬回家。</p>
+  <a class="cta" href="./">開始造島</a><a class="cta alt" href="#how">先看玩法</a>
+
+  <h2>故事九章</h2>
+  <div class="grid">
+    <div class="card chap"><img src="assets/npc/crane.webp" alt=""><div><b>序章　漂流的島主</b><span>丹頂鶴爺爺帶你認識這座島。收服 3 隻字靈、種下第一棵樹。</span></div></div>
+    <div class="card chap"><img src="assets/npc/otter.webp" alt=""><div><b>第一章　林中的回聲</b><span>海獺麵包師的店被沖走了。到字音林收服字靈，打敗「走音妖」。</span></div></div>
+    <div class="card chap"><img src="assets/npc/bear.webp" alt=""><div><b>第二章　裂開的石碑</b><span>路牌上全是錯字！到字形山找回正確的字，打敗「錯字妖」。</span></div></div>
+    <div class="card chap"><img src="assets/npc/hedgehog.webp" alt=""><div><b>第三章　海上的燈火</b><span>刺蝟郵差的信被誤會了。弄清楚字義，蓋碼頭，打敗「迷義妖」。</span></div></div>
+    <div class="card chap"><img src="assets/npc/rabbit.webp" alt=""><div><b>第四章　花谷的約定</b><span>大家亂用成語！陪兔子花匠走一趟成語谷，打敗「亂語妖」。</span></div></div>
+    <div class="card chap"><img src="assets/npc/owl.webp" alt=""><div><b>第五章　遺跡裡的老師</b><span>貓頭鷹老師講六書與字體演變。立一座碑林，打敗「古文妖」。</span></div></div>
+    <div class="card chap"><img src="assets/icons/b_lantern.webp" alt=""><div><b>第六章　市集的新年</b><span>送匾額、貼春聯、用對稱謂，幫島民過新年，打敗「失禮妖」。</span></div></div>
+    <div class="card chap"><img src="assets/icons/b_moon.webp" alt=""><div><b>第七章　月下的詩會</b><span>絕句、律詩、節日習俗，在詩詞亭辦詩會，打敗「亂韻妖」。</span></div></div>
+    <div class="card chap"><img src="assets/boss/b8.webp" onerror="this.src='assets/icons/b_lighthouse.webp'" alt=""><div><b>終章　墨潮之主</b><span>到會考神殿，用真正的會考、基測題目，對決墨潮之主。</span></div></div>
+  </div>
+
+  <h2>島上的朋友</h2>
+  <div class="ppl">
+    <div class="card"><img src="assets/npc/crane.webp" alt=""><b>丹頂鶴爺爺</b><span>帶路的老前輩</span></div>
+    <div class="card"><img src="assets/npc/otter.webp" alt=""><b>海獺麵包師</b><span>麵包香飄滿島</span></div>
+    <div class="card"><img src="assets/npc/bear.webp" alt=""><b>熊熊木匠</b><span>蓋房子找他</span></div>
+    <div class="card"><img src="assets/npc/hedgehog.webp" alt=""><b>刺蝟郵差</b><span>每天幫島上送信</span></div>
+    <div class="card"><img src="assets/npc/rabbit.webp" alt=""><b>兔子花匠</b><span>照顧島上花草</span></div>
+    <div class="card"><img src="assets/npc/owl.webp" alt=""><b>貓頭鷹老師</b><span>文字的歷史都問他</span></div>
+  </div>
+
+  <h2>八個採集地＋會考神殿</h2>
+  <div class="places">
+    <div class="place"><img src="assets/grounds/sound.webp" alt=""><div><b>字音林</b><span>讀音、多音字、形近字</span><span>→ 木材</span></div></div>
+    <div class="place"><img src="assets/grounds/form.webp" alt=""><div><b>字形山</b><span>錯別字、同音字</span><span>→ 石材</span></div></div>
+    <div class="place"><img src="assets/grounds/meaning.webp" alt=""><div><b>字義海</b><span>一字多義、古今異義</span><span>→ 貝殼</span></div></div>
+    <div class="place"><img src="assets/grounds/idiom.webp" alt=""><div><b>成語谷</b><span>成語、詞語的意思與用法</span><span>→ 花種</span></div></div>
+    <div class="place"><img src="assets/grounds/ruins.webp" alt=""><div><b>文字遺跡</b><span>六書、字體演變、書法家</span><span>→ 竹簡</span></div></div>
+    <div class="place"><img src="assets/grounds/workshop.webp" alt=""><div><b>文句工坊</b><span>標點、詞性語法、語病</span><span>→ 琉璃</span></div></div>
+    <div class="place"><img src="assets/grounds/market.webp" alt=""><div><b>禮俗市集</b><span>題辭、對聯、稱謂、書信</span><span>→ 紅紙</span></div></div>
+    <div class="place"><img src="assets/grounds/pavilion.webp" alt=""><div><b>詩詞亭</b><span>格律、節慶、國學常識</span><span>→ 詩箋</span></div></div>
+    <div class="place"><img src="assets/grounds/temple.webp" alt=""><div><b>會考神殿</b><span>103–115 會考、基測真題</span><span>→ 星砂</span></div></div>
+  </div>
+
+  <h2 id="how">怎麼玩</h2>
+  <ol class="steps">
+    <li><b>採集</b>：選一個採集地，一次遇到 10 隻字靈。答對就收服，帶回建材和銅錢；答錯牠會逃走，之後可以到「追捕逃靈」抓回來。</li>
+    <li><b>建造</b>：回到「我的島」按「建造」，選建築再點島上的格子。填海造陸讓島變大，碼頭、拱橋、帆船蓋在海上。32 種建築，戰力越高解鎖越多。</li>
+    <li><b>委託</b>：島民會來請你幫忙——送匾額、配春聯、寫信、準備過節。答對有額外獎勵，春聯還會貼到房子門口。</li>
+    <li><b>劇情</b>：完成劇情卡上的目標，挑戰墨妖。你有 3 顆心，答對一題墨妖扣一格血；打贏了，島民就搬上島。</li>
+    <li><b>收藏</b>：字靈圖鑑記錄你收服的每一隻；集滿同一年的真題，得到年度印記。</li>
+  </ol>
+
+  <h2>題庫</h2>
+  <div class="tablewrap"><table>
+    <tr><th>字靈</th><th>題型</th><th>說明</th></tr>
+    <tr><td>朱印神靈</td><td>會考、基測真題 250 題</td><td>103–115 會考（含補考、重考）與基測公開試題，答案依心測中心參考答案，解析自行撰寫</td></tr>
+    <tr><td>金靈</td><td>會考考法題</td><td>何者用字完全正確、成語詞語何者使用最恰當、何者沒有語病、題辭運用</td></tr>
+    <tr><td>玉靈</td><td>比對題</td><td>讀音前後相同、意思前後相同、對聯配對、造字法相同</td></tr>
+    <tr><td>墨靈</td><td>知識點字卡</td><td>讀音、正確字、字義、成語意思、六書、標點、詩體判斷</td></tr>
+  </table></div>
+  <p class="note">全部約 10,800 題。字音讀音都經教育部《重編國語辭典修訂本》核對；有兩種說法都通的題目一律不出。</p>
+
+  <h2>小撇步</h2>
+  <div class="icons">
+    <span><img src="assets/icons/m_wood.webp" alt="">連續答對 3、5、8 題，銅錢加倍</span>
+    <span><img src="assets/icons/m_star.webp" alt="">真題第一次答對送星砂</span>
+    <span><img src="assets/icons/b_museum.webp" alt="">點博物館開圖鑑</span>
+    <span><img src="assets/icons/b_academy.webp" alt="">點書院直接去採集</span>
+  </div>
+  <p class="note">墨寶鋪可以買「照妖鏡」（刪掉一個錯誤選項）和「定身符」（答錯可以再答一次）。<br>
+  進度存在這台裝置的瀏覽器裡；換手機前，到「戰績」複製存檔碼。</p>
+  <a class="cta" href="./">開始造島</a>
+</div>
+</body>
+</html>

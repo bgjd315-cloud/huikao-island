@@ -465,7 +465,9 @@ function glyphTexture(ch, color) {
   x.font = "bold 64px 'Noto Serif TC', serif";
   x.textAlign = "center"; x.textBaseline = "middle";
   x.fillText(ch, 64, 68);
-  return new THREE.CanvasTexture(c);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 function spawnResidents() {
   for (const r of residents) scene.remove(r.s);
@@ -481,14 +483,28 @@ function spawnResidents() {
     const [px, pz] = pos(...unkey(k));
     s.position.set(px, 0.4, pz);
     scene.add(s);
-    residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6 });
+    residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6, y: 0.4 });
+  }
+  // 劇情中入住的島民：用立繪當看板，比字靈大一點
+  const moved = (G.state().story && G.state().story.moved) || [];
+  for (const id of moved) {
+    const tex = npcTex[id] ||= new THREE.TextureLoader().load(`assets/npc/${id}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; });
+    tex.colorSpace = THREE.SRGBColorSpace;   // 不設的話圖會偏白
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
+    s.scale.set(1, 1, 1);
+    const k = free[Math.floor(Math.random() * free.length)];
+    const [px, pz] = pos(...unkey(k));
+    s.position.set(px, 0.5, pz);
+    scene.add(s);
+    residents.push({ s, to: s.position.clone(), wait: Math.random() * 3, phase: Math.random() * 6, y: 0.5 });
   }
 }
+const npcTex = {};
 function moveResidents(dt, t) {
   const L = landSet(), I = island();
   const free = [...L].filter((k) => !I.objs[k] || ["path", "flowers"].includes(I.objs[k].t));
   for (const r of residents) {
-    r.s.position.y = 0.4 + Math.sin(t * 2 + r.phase) * 0.06;
+    r.s.position.y = r.y + Math.sin(t * 2 + r.phase) * 0.06;
     if (r.wait > 0) { r.wait -= dt; continue; }
     const d = new THREE.Vector3(r.to.x - r.s.position.x, 0, r.to.z - r.s.position.z);
     if (d.length() < 0.05) {
@@ -789,8 +805,19 @@ function show() {
   }
   renderPalette();
   renderQuests();
+  if (window.HKStory) window.HKStory.onIsland();
   requestAnimationFrame(resize);
 }
 
-window.HKIsland = { show };
+// 劇情用：島上的統計
+function stats() {
+  const I = island(), c = {};
+  for (const o of Object.values(I.objs)) c[o.t] = (c[o.t] || 0) + 1;
+  const sc = score();
+  return { count: c, land: I.land.length, score: sc, stars: STAR_AT.filter((v) => sc >= v).length,
+    couplets: Object.values(I.objs).filter((o) => o.couplet).length, quests: Object.keys((G.state().qb || {}).done || {}).length };
+}
+function refresh() { if (started) { rebuild(); renderQuests(); } }
+window.HKIsland = { show, stats, refresh };
+if (window.HKStory) window.HKStory.onIsland();
 if (window.__islandPending) show();

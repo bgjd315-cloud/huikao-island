@@ -251,3 +251,53 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
 .qnpc.big.emo{font-size:60px; line-height:84px}
 .qhost{display:flex; gap:.8rem; align-items:center; margin-bottom:.6rem}
 .qhost p{margin:.2rem 0 0}
+
+/* ---------- 故事 ---------- */
+.story-card{display:flex; gap:.7rem; align-items:flex-start; margin-bottom:.8rem; border:2px solid var(--r3)}
+.st-face{width:64px; height:64px; object-fit:contain; flex:none}
+.st-face.emo{font-size:46px; line-height:64px; text-align:center}
+.st-body{flex:1; min-width:0}
+.goals{list-style:none; padding:0; margin:.4rem 0; display:grid; gap:4px; font-size:.88rem}
+.goals li{display:grid; grid-template-columns:1fr 70px 46px; gap:6px; align-items:center}
+.goals li.done{color:var(--muted)}
+.goals .prog{height:6px; background:var(--line); border-radius:3px; overflow:hidden}
+.goals .prog i{display:block; height:100%; background:var(--r2)}
+.goals .num{font-size:.78rem; text-align:right; color:var(--muted)}
+.story{position:fixed; inset:0; z-index:60; background:#000 center/cover no-repeat; display:flex; align-items:flex-end; justify-content:center; cursor:pointer}
+.story-box{position:relative; width:min(720px,94vw); margin:0 0 4vh; display:flex; gap:.8rem; align-items:flex-end;
+  background:color-mix(in srgb, var(--surface) 92%, transparent); border-radius:18px; padding:.8rem 1rem; box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.story-box.narr{background:rgba(20,24,30,.82); color:#f4f1ea}
+.story-face .st-big{width:120px; height:120px; object-fit:contain; margin-top:-70px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+.story-face .st-big.emo{font-size:84px; line-height:120px; display:block; text-align:center}
+.story-talk{flex:1; min-height:5.5em}
+.story-talk p{margin:.3rem 0 0; font-size:1.05rem; line-height:1.7}
+.story-next{position:absolute; right:14px; bottom:8px; font-size:.85rem; opacity:.7; animation:bob 1s infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.story-skip{position:absolute; top:12px; right:12px; font-size:.8rem; opacity:.85}
+.boss{position:fixed; inset:0; z-index:55; background:rgba(15,20,30,.6); display:flex; justify-content:center; align-items:flex-start; overflow:auto; padding:3vh 12px}
+.boss-card{width:min(640px,100%)}
+.boss-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.boss-img{text-align:center; height:150px}
+.boss-img img{height:150px; object-fit:contain}
+.boss-img .boss-emo{font-size:110px; line-height:150px}
+.boss-img.hit{animation:hit .4s}
+.boss-img.shake{animation:shake .4s}
+@keyframes hit{30%{transform:scale(.88); filter:brightness(1.8)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.boss-hp{height:12px; border-radius:6px; background:var(--line); overflow:hidden; margin:.4rem 0 .6rem}
+.boss-hp i{display:block; height:100%; background:linear-gradient(90deg,#e76f51,#b2392c); transition:width .4s}
+.help p{margin:.5rem 0; line-height:1.7}
+@media (max-width:560px){
+  .story-face .st-big{width:84px; height:84px; margin-top:-50px}
+  .story-face .st-big.emo{font-size:60px; line-height:84px}
+  .story-talk p{font-size:.95rem}
+  .goals li{grid-template-columns:1fr 50px 40px}
+}
+
+@media (max-width:560px){
+  .story-card{gap:.5rem}
+  .st-face{width:46px; height:46px}
+  .st-face.emo{font-size:34px; line-height:46px}
+  .goals li{grid-template-columns:1fr auto; row-gap:2px}
+  .goals .prog{grid-column:1 / -1; grid-row:2}
+}
