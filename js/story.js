@@ -131,7 +131,7 @@
         ["owl", "去文字遺跡收服字靈，再幫我立一座碑林，把文字的故事好好保存下來。"],
         ["me", "原來每個字都有自己的故事！"],
       ],
-      goals: [goal.got(8, K.古, "文字遺跡、文句工坊的"), goal.build("stele", 1, "立一座碑林")],
+      goals: [goal.got(8, [...new Set([...K.古, ...K.句])], "文字遺跡、文句工坊的"), goal.build("stele", 1, "立一座碑林")],
       boss: { id: "b5", name: "古文妖", kinds: K.古, hp: 6, emoji: "🗿",
         lines: [["foe", "甲骨、小篆、楷書……誰先誰後？哪個字怎麼造的？你記得嗎？"], ["owl", "島主，想想字的形狀和演變，你一定答得出來。"]] },
       outro: [
@@ -334,11 +334,11 @@
     const q = bt.qs[bt.i];
     $("#boss-hp").innerHTML = `<i style="width:${(bt.hp / bt.b.hp) * 100}%"></i>`;
     $("#boss-hearts").textContent = "❤️".repeat(bt.hearts) + "🤍".repeat(3 - bt.hearts);
-    $("#boss-stem").textContent = q.stem;
+    $("#boss-stem").innerHTML = G.fmt(q.stem);   // 題組文章要保留換行
     $("#boss-exp").innerHTML = "";
     $("#boss-go").classList.add("hidden");
     const box = $("#boss-opts");
-    box.innerHTML = q.options.map((o, i) => `<button class="opt" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("");
+    box.innerHTML = q.options.map((o, i) => `<button class="opt" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${G.fmt(o)}</span></button>`).join("");
     bt.locked = false;
     for (const btn of box.querySelectorAll(".opt")) btn.addEventListener("click", () => answer(bt, +btn.dataset.i));
   }
@@ -359,7 +359,7 @@
     $("#boss-img").classList.add(ok ? "hit" : "shake");
     $("#boss-hp").innerHTML = `<i style="width:${(bt.hp / bt.b.hp) * 100}%"></i>`;
     $("#boss-hearts").textContent = "❤️".repeat(Math.max(0, bt.hearts)) + "🤍".repeat(3 - Math.max(0, bt.hearts));
-    $("#boss-exp").innerHTML = `<p class="verdict ${ok ? "ok" : "no"}">${ok ? `命中！${bt.b.name}受到傷害` : "被反擊了！"}</p><div class="exp small">${esc(q.explanation || "")}</div>`;
+    $("#boss-exp").innerHTML = `<p class="verdict ${ok ? "ok" : "no"}">${ok ? `命中！${bt.b.name}受到傷害` : "被反擊了！"}</p><div class="exp small">${G.fmt(q.explanation || "")}</div>`;
     const go = $("#boss-go");
     go.classList.remove("hidden");
     const end = bt.hp <= 0 ? "win" : bt.hearts <= 0 || bt.i + 1 >= bt.qs.length ? "lose" : null;

@@ -39,6 +39,7 @@
 
   let BANK = [], BY_ID = {}, EDITION = "full", QUESTS = [];
   const EXAM = (q) => q.srcType === "會考" || q.srcType === "基測";
+  let LOAD_ERR = false;   // 存檔壞掉時設成 true，載入題庫後提示
   let S = load();
   let run = null;
 
@@ -47,11 +48,25 @@
     return { coins: 0, got: {}, esc: {}, stats: {}, items: { mirror: 3, charm: 1 }, lv: { pot: 0, brush: 0 },
       runs: 0, bestCombo: 0, seen: {}, mat: { wood: 4, stone: 0, shell: 3, flower: 2, star: 0 }, island: null };
   }
+  // 逐層合併：舊存檔或存檔碼缺的巢狀欄位（items、lv、mat）補預設值，不會出現 NaN、undefined
+  function merge(s) {
+    const f = fresh(), o = Object.assign(f, s);
+    for (const k of ["items", "lv", "mat"]) o[k] = Object.assign(fresh()[k], s[k] && typeof s[k] === "object" ? s[k] : {});
+    for (const k of ["got", "esc", "stats", "seen"]) if (!o[k] || typeof o[k] !== "object") o[k] = {};
+    for (const k of ["coins", "runs", "bestCombo"]) if (typeof o[k] !== "number" || !isFinite(o[k])) o[k] = 0;
+    return o;
+  }
   function load() {
+    let raw = null;
+    try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return fresh(); /* 私密視窗等情況讀不到就重新開始 */ }
+    if (!raw) return fresh();
     try {
-      const s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-      if (s && s.got) return Object.assign(fresh(), s);
-    } catch (e) { /* 私密視窗等情況讀不到就重新開始 */ }
+      const s = JSON.parse(raw);
+      if (s && s.got) return merge(s);
+    } catch (e) { /* 下面處理 */ }
+    // 存檔壞掉：先把原字串備份起來，不要被新檔蓋掉
+    try { localStorage.setItem(SAVE_KEY + "_backup", raw); } catch (e) { /* 存不了就算了 */ }
+    LOAD_ERR = true;
     return fresh();
   }
   function save() {
@@ -131,7 +146,9 @@
     state: () => S,
     save: () => save(),
     toast: (m) => toast(m),
-    go: (tab) => show(tab),
+    go: (tab) => leave(tab),
+    shuffle: (a) => shuffle(a),
+    fmt: (t) => fmt(t),
     power: () => totalPower(),
     quests: () => QUESTS,
     questions: () => BANK,
@@ -210,12 +227,15 @@
     refreshTop();
     window.scrollTo({ top: 0 });
   }
+  // 採集中要離開（分頁、頁首頭像、島上建築）都先確認
+  function leave(tab) {
+    if (run && !run.done && !confirm("正在採集中，要離開嗎？這次採集會結束。")) return false;
+    if (run && !run.done) endRun(true);
+    show(tab);
+    return true;
+  }
   for (const b of document.querySelectorAll(".tabs button")) {
-    b.addEventListener("click", () => {
-      if (run && !run.done && !confirm("正在採集中，要離開嗎？這次採集會結束。")) return;
-      if (run && !run.done) endRun(true);
-      show(b.dataset.tab);
-    });
+    b.addEventListener("click", () => leave(b.dataset.tab));
   }
 
   // ---------- 獵場 ----------
@@ -646,7 +666,7 @@
     try {
       const s = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
       if (!s.got) throw new Error("bad");
-      S = Object.assign(fresh(), s);
+      S = merge(s);
       save();
       toast("已還原存檔");
       show("me");
@@ -668,7 +688,7 @@
   }
 
   // ---------- 啟動 ----------
-  fetch("data/bank.json")
+  fetch("data/bank.json?v=20261104")
     .then((r) => r.json())
     .then((d) => {
       BANK = d.questions;
@@ -684,6 +704,7 @@
         `題庫共 ${BANK.length} 題：會考、基測真題 ${c.會考 || 0} 題，題目取自國中教育會考與國中基測公布之歷屆試題，答案依心測中心參考答案，解析為本站自行撰寫；` +
         `其餘 ${BANK.length - (c.會考 || 0)} 題是把形音義、詞成語與基礎語文知識點重新組合出的新題，例句為改寫，解析由程式依知識點產生。`;
       show("island");
+      if (LOAD_ERR) setTimeout(() => alert("存檔讀不到（可能壞掉了），已經先備份起來，這次先從新的開始。\n如果之前有複製存檔碼，可以到「戰績」頁按「貼上存檔碼還原」。"), 300);
     })
     .catch(() => { document.querySelector("main").innerHTML = '<div class="card">題庫載入失敗，請重新整理。</div>'; });
 })();

@@ -134,8 +134,23 @@ function init() {
   resize();
   rebuild();
   applyTheme(island().theme || "晨光");
+  play();
+}
+// 離開「我的島」或切到背景時停止 3D 運算，省電也不發燙
+let playing = false;
+function islandVisible() { return !document.hidden && !$("#v-island").classList.contains("hidden"); }
+function play() {
+  if (!renderer || playing || !islandVisible()) return;
+  playing = true;
+  clock.getDelta();
   renderer.setAnimationLoop(tick);
 }
+function pause() {
+  if (!renderer || !playing) return;
+  playing = false;
+  renderer.setAnimationLoop(null);
+}
+document.addEventListener("visibilitychange", () => (islandVisible() ? play() : pause()));
 function resize() {
   const box = $("#island-3d");
   const w = box.clientWidth, h = box.clientHeight;
@@ -161,7 +176,20 @@ const pos = (x, z) => [x - HALF, z - HALF];
 
 // ---------- 低多邊形模型 ----------
 const M = {};
-function mat(c) { return (M[c] ||= new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.85 })); }
+function mat(c) {
+  if (!M[c]) { M[c] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.85 }); M[c].userData.keep = true; }
+  return M[c];
+}
+// 重建前釋放舊模型佔用的記憶體；共用的材質與貼圖（userData.keep）留著重複使用
+function disposeTree(root) {
+  root.traverse((c) => {
+    if (c.geometry && !c.isSprite) c.geometry.dispose();   // Sprite 的幾何體是 three.js 全域共用的，不能釋放
+    for (const m of [].concat(c.material || [])) {
+      if (m.map && !m.map.userData.keep) m.map.dispose();
+      if (!m.userData.keep) m.dispose();
+    }
+  });
+}
 function mesh(geo, color, y = 0) {
   const m = new THREE.Mesh(geo, mat(color));
   m.position.y = y;
@@ -421,6 +449,7 @@ function build(o) {
 // ---------- 重建 ----------
 function rebuild() {
   const I = island(), L = landSet();
+  disposeTree(landGroup);
   landGroup.clear();
   for (const k of I.land) {
     const [x, z] = unkey(k), [px, pz] = pos(x, z);
@@ -435,6 +464,7 @@ function rebuild() {
       landGroup.add(top);
     }
   }
+  disposeTree(objGroup);
   objGroup.clear();
   lights.length = 0;
   for (const [k, o] of Object.entries(I.objs)) {
@@ -453,6 +483,12 @@ function rebuild() {
 }
 
 // ---------- 島民：收服的字靈 ----------
+const GLYPH = {};
+function glyphMat(ch, color) {   // 同一個字、同一個顏色共用一份貼圖與材質
+  const k = ch + "|" + color;
+  if (!GLYPH[k]) { GLYPH[k] = new THREE.SpriteMaterial({ map: glyphTexture(ch, color) }); GLYPH[k].userData.keep = true; GLYPH[k].map.userData.keep = true; }
+  return GLYPH[k];
+}
 function glyphTexture(ch, color) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
@@ -470,14 +506,14 @@ function glyphTexture(ch, color) {
   return tex;
 }
 function spawnResidents() {
-  for (const r of residents) scene.remove(r.s);
+  for (const r of residents) { scene.remove(r.s); disposeTree(r.s); }
   residents = [];
   const L = landSet(), I = island();
   const free = [...L].filter((k) => !I.objs[k] || ["path", "flowers"].includes(I.objs[k].t));
   if (!free.length) return;
   const caught = G.residents(14);
   for (const { ch, color } of caught) {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glyphTexture(ch, color) }));
+    const s = new THREE.Sprite(glyphMat(ch, color));
     s.scale.set(0.5, 0.5, 0.5);
     const k = free[Math.floor(Math.random() * free.length)];
     const [px, pz] = pos(...unkey(k));
@@ -517,6 +553,7 @@ function spawnResidents() {
     const tex = npcTex[id] ||= new THREE.TextureLoader().load(`assets/npc/${id}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; },
       undefined, () => { npcBad[id] = 1; for (const r of residents) if (r.npc === id) r.s.visible = false; });
     tex.colorSpace = THREE.SRGBColorSpace;   // 不設的話圖會偏白
+    tex.userData.keep = true;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
     s.scale.set(1, 1, 1);
     const k = free[Math.floor(Math.random() * free.length)];
@@ -549,6 +586,7 @@ function moveResidents(dt, t) {
 
 // ---------- 動畫 ----------
 function tick() {
+  if (!islandVisible()) return pause();
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
   const p = waterGeo.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -746,7 +784,7 @@ function npcPic(id, cls) {
   return `<img class="${cls}" src="assets/npc/${id}.webp" alt="${n.emoji}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'${cls} emo',textContent:this.alt}))">`;
 }
 const guestPool = {};
-function guestQuests(id) {   // 新島民的委託：取自題庫同類別單選題；選項不洗牌，解析裡的 (A)(B) 才對得上
+function guestQuests(id) {   // 新島民的委託：取自題庫同類別單選題；fixed＝解析有 (A)～(D)，洗牌時要跟著改代號
   if (guestPool[id]) return guestPool[id];
   const n = NPCS[id], rw = { 字卡: 10, 比對: 20, 情境: 30, 會考: 40 };
   const mat = { 字音: "wood", 字形: "stone", 字義: "shell", 成語: "flower", 六書: "bamboo", 字體書法: "bamboo",
@@ -818,8 +856,10 @@ function rosterHtml() {
   const row = (id, here, hint) => `<div class="rs ${here ? "" : "away"}">${npcPic(id, "qnpc")}<span>${here ? NPCS[id].name : "？？？"}</span>` +
     `<small>${here ? (NPCS[id].task ? "委託：" + NPCS[id].task : "") : hint}</small></div>`;
   const ids = Object.keys(NPCS);
-  const cells = ids.map((id) => NPCS[id].lure ? row(id, guests()[id], lureText(id)) : row(id, moved.includes(id), "跟著故事主線搬來"));
-  const cnt = ids.filter((id) => NPCS[id].lure ? guests()[id] : moved.includes(id)).length;
+  // 丹頂鶴爺爺從序章就在島上，不靠章節搬來
+  const here = (id) => NPCS[id].lure ? guests()[id] : id === "crane" || moved.includes(id);
+  const cells = ids.map((id) => row(id, here(id), NPCS[id].lure ? lureText(id) : "跟著故事主線搬來"));
+  const cnt = ids.filter(here).length;
   return `<details class="card roster"><summary>島民名冊（${cnt}／${ids.length}）</summary><div class="rs-grid">${cells.join("")}</div></details>`;
 }
 function renderQuests() {
@@ -841,12 +881,28 @@ function rewardText(r) {
     return m ? `${icon("m_" + k, m.icon)}${v}` : "";
   }).join(" ") ;
 }
+// 解析裡的 (A)～(D) 跟著洗牌後的位置改；四段剛好依 (A)(B)(C)(D) 排的，順便照新順序重排
+function relabel(exp, order) {
+  const to = {};
+  order.forEach((oi, k) => { to["ABCD"[oi]] = "ABCD"[k]; });
+  const m = String(exp || "").match(/^([\s\S]*?)(\(A\)[\s\S]*?)(\(B\)[\s\S]*?)(\(C\)[\s\S]*?)(\(D\)[\s\S]*)$/);
+  if (m && (exp.match(/\([A-D]\)/g) || []).length === 4) {
+    const segs = m.slice(2).map((t, i) => ({ k: to["ABCD"[i]], t: "(" + to["ABCD"[i]] + ")" + t.slice(3) }));
+    segs.sort((a, b) => a.k.localeCompare(b.k));
+    // 每段結尾的標點留在原位置，避免重排後最後一段多一個句號、中間少一個
+    const tail = (t) => (t.match(/[。；，、\s]*$/) || [""])[0];
+    const ends = m.slice(2).map(tail);
+    return m[1] + segs.map((g, i) => g.t.slice(0, g.t.length - tail(g.t).length) + ends[i]).join("");
+  }
+  return String(exp || "").replace(/\(([A-D])\)/g, (all, c) => "(" + (to[c] || c) + ")");
+}
 function openQuest(q) {
-  const order = q.options.map((_, i) => i);
-  if (!q.fixed) order.sort(() => Math.random() - 0.5);
+  // 每一題都洗牌（Fisher–Yates），正解不會老是在前面
+  const order = G.shuffle(q.options.map((_, i) => i));
+  q._exp = q.fixed ? relabel(q.explain, order) : q.explain;
   const body = $("#mbody");
-  body.innerHTML = `<div class="qhost">${npcPic(q.npc, "qnpc big")}<div><b>${NPCS[q.npc]?.name || "島民"}</b><p>${q.text}</p></div></div>` +
-    `<div class="opts">${order.map((oi, k) => `<button class="opt" data-oi="${oi}"><span class="k">${"ABCD"[k]}</span><span>${q.options[oi]}</span></button>`).join("")}</div>` +
+  body.innerHTML = `<div class="qhost">${npcPic(q.npc, "qnpc big")}<div><b>${NPCS[q.npc]?.name || "島民"}</b><p>${G.fmt(q.text)}</p></div></div>` +
+    `<div class="opts">${order.map((oi, k) => `<button class="opt" data-oi="${oi}"><span class="k">${"ABCD"[k]}</span><span>${G.fmt(q.options[oi])}</span></button>`).join("")}</div>` +
     `<div id="qresult"></div><button class="wide" id="q-close">先不要</button>`;
   $("#modal").classList.remove("hidden");
   $("#q-close").addEventListener("click", () => $("#modal").classList.add("hidden"));
@@ -881,7 +937,7 @@ function answerQuest(q, oi) {
   }
   G.save();
   $("#qresult").innerHTML = `<p class="verdict ${ok ? "ok" : "no"}">${ok ? "謝謝你！收下委託獎勵：" + rewardText(q.reward) + extra : "好像不太對……下次再麻煩你了。"}</p>` +
-    `<div class="exp">${q.explain}</div>`;
+    `<div class="exp">${G.fmt(q._exp ?? q.explain)}</div>`;
   $("#q-close").textContent = "關閉";
   renderQuests();
   renderHud();
@@ -915,7 +971,7 @@ function show() {
   renderQuests();
   if (window.HKStory) window.HKStory.onIsland();
   if ($("#modal").classList.contains("hidden")) checkGuests();
-  requestAnimationFrame(resize);
+  requestAnimationFrame(() => { resize(); play(); });
 }
 
 // 劇情用：島上的統計
