@@ -16,7 +16,7 @@
     land: (n) => ({ label: `島嶼陸地擴大到 ${n} 格`, need: n, now: () => I().land }),
     stars: (n) => ({ label: `島嶼評價達到 ${n} 星`, need: n, now: () => I().stars }),
     quests: (n) => ({ label: `完成島民委託 ${n} 次`, need: n, now: () => I().quests }),
-    couplet: (n) => ({ label: `把春聯貼上門口 ${n} 副`, need: n, now: () => I().couplets }),
+    couplet: (n) => ({ label: `把春聯貼上門口 ${n} 副`, need: n, now: () => I().couplets, couplet: true }),
   };
   const I = () => (window.HKIsland ? window.HKIsland.stats() : { count: {}, land: 16, stars: 0, quests: 0, couplets: 0 });
 
@@ -389,6 +389,7 @@
   function alertBox(html, after) {
     $("#mbody").innerHTML = html + `<button class="primary wide" id="al-ok">好</button>`;
     $("#modal").classList.remove("hidden");
+    if (after) $("#modal").dataset.lock = "1";     // 按「好」才接著跑下一步，點背景、Esc 不能關
     $("#al-ok").addEventListener("click", () => { $("#modal").classList.add("hidden"); if (after) after(); });
   }
   function replayMenu() {
@@ -420,6 +421,12 @@
   }
 
   window.HKStory = {
+    // 目前這一章要貼春聯、還沒貼夠：委託板要保證有一張春聯委託
+    wantsCouplet() {
+      if (finished()) return false;
+      const c = CH[st().ch];
+      return !!c && (c.goals || []).some((g) => g.couplet && g.now() < g.need);
+    },
     onIsland() {
       if (!G.ready()) return;
       renderCard();

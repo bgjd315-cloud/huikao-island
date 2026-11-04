@@ -355,3 +355,25 @@ u{text-decoration-thickness:2px; text-underline-offset:3px}
 .rs{display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; font-size:.82rem}
 .rs small{opacity:.7; font-size:.72rem; line-height:1.25}
 .rs.away .qnpc{filter:brightness(0) opacity(.28)}
+
+/* 分頁列固定在上方：島嶼捲到時停在分頁列下面，手機上畫布高度扣掉分頁列，不會被蓋住 */
+.island-wrap{scroll-margin-top:calc(var(--tabs-h, 56px) + 6px)}
+@media (max-width: 560px) {
+  #island-3d{height:min(72vh, calc(100svh - var(--tabs-h, 100px) - 20px))}
+}
+/* 圖鑑格子的出處太長時顯示省略號 */
+.cell .cap{text-overflow:ellipsis; padding:0 3px}
+
+/* 手機觸控：按鈕至少 44×44（外觀不變的用透明的點擊範圍撐大） */
+@media (pointer: coarse), (max-width: 560px) {
+  .av-mini{width:44px; height:44px}
+  .music-btn{min-width:44px; min-height:44px}
+  .is-theme button, .tabs button{position:relative}
+  .is-theme button::after{content:""; position:absolute; inset:-11px -2px}
+  #is-cats button, #f-tier, #enc-quit, #use-mirror, #use-charm, #boss-quit, #av-name,
+  #d-kind, #d-tier, #d-show, .tabs button, #story-skip{min-height:44px}
+  #story-skip{min-width:44px}
+  .roster summary{padding:.65em 0}
+  .chk{display:flex; align-items:center; gap:.4em; min-height:44px}
+  #f-new{width:24px; height:24px}
+}

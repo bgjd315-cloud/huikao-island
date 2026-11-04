@@ -294,6 +294,7 @@
   function first(done) {
     $("#mbody").innerHTML = `<h3>建立你的島主</h3><div id="av-first"></div>`;
     $("#modal").classList.remove("hidden");
+    $("#modal").dataset.lock = "1";      // 建好島主才播序章
     render($("#av-first"), { first: true, done: () => { $("#modal").classList.add("hidden"); done && done(); } });
   }
 

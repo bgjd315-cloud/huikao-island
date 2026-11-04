@@ -32,7 +32,7 @@
   const SHOP = [
     { id: "mirror1", name: "照妖鏡", desc: "答題時去掉一個錯誤選項。", cost: 30, give: { mirror: 1 } },
     { id: "mirror5", name: "照妖鏡（五面裝）", desc: "一次買五面，比較划算。", cost: 130, give: { mirror: 5 } },
-    { id: "charm1", name: "定身符", desc: "先貼上再作答：答錯時字靈不會逃走，可以再答一次（收服時銅錢減半）。", cost: 60, give: { charm: 1 } },
+    { id: "charm1", name: "定身符", desc: "先貼上再作答：答錯時字靈不會逃走，可以再答一次（收服時銅錢和建材減半）。", cost: 60, give: { charm: 1 } },
     { id: "pot", name: "聚寶盆", desc: "每升一級，之後採集得到的銅錢多一成。", up: "pot", max: 10, base: 200, exp: 1.6 },
     { id: "brush", name: "文房四寶", desc: "每升一級，全部字靈的戰力多 5%。", up: "brush", max: 10, base: 300, exp: 1.7 },
   ];
@@ -127,10 +127,11 @@
   const MAT_OF = { 字音: "wood", 字形: "stone", 字義: "shell", 成語: "flower", 六書: "bamboo", 字體書法: "bamboo",
     標點: "glass", 語法: "glass", 語病詞語: "glass", 應用文: "redpaper", 文化常識: "poem" };
   const MAT_N = { 字卡: 1, 比對: 2, 情境: 3, 會考: 4 };
-  function gainMat(q, before, wasEsc) {
+  function gainMat(q, before, wasEsc, retried) {
     const got = {};
     let n = MAT_N[q.tier] || 1;
     if (before) n = Math.ceil(n / 2);
+    if (retried) n = Math.ceil(n / 2);     // 定身符再答對：建材和銅錢一樣減半
     if (wasEsc) n += 1;
     got[MAT_OF[q.kind] || "wood"] = n;
     if (EXAM(q) && !before) got.star = 1;
@@ -237,6 +238,10 @@
   for (const b of document.querySelectorAll(".tabs button")) {
     b.addEventListener("click", () => leave(b.dataset.tab));
   }
+  // 分頁列固定在上方：把它的高度給 CSS，讓 3D 島留出位置、捲動時停在分頁列下面
+  const tabsH = () => document.documentElement.style.setProperty("--tabs-h", $(".tabs").offsetHeight + "px");
+  tabsH();
+  window.addEventListener("resize", tabsH);
 
   // ---------- 獵場 ----------
   function tierFilter() { return $("#f-tier").value; }
@@ -421,7 +426,7 @@
       if (before) gain *= 0.5;
       if (wasEsc) gain *= 1.5;
       if (c.retried) gain *= 0.5;
-      matGain = gainMat(q, before, wasEsc);
+      matGain = gainMat(q, before, wasEsc, c.retried);
       S.got[q.id] = Math.min(3, (S.got[q.id] || 0) + 1);
       delete S.esc[q.id];
       run.caught++;
@@ -463,7 +468,7 @@
     $("#q-exp").innerHTML = `<b>正解：${keys}</b>　${fmt(remapExp(q.explanation, c.order) || "（本題沒有附解析）")}`;
     $("#q-result").classList.remove("hidden");
     $("#q-tools").classList.add("hidden");
-    $("#enc-combo").textContent = run.combo >= 2 ? `連收 ${run.combo}（銅錢 ×${comboMult(run.combo)}）` : "";
+    $("#enc-combo").textContent = run.combo >= 2 ? `連收 ${run.combo}` + (comboMult(run.combo) > 1 ? `（銅錢 ×${comboMult(run.combo)}）` : "") : "";
     $("#q-next").textContent = run.i + 1 >= run.qs.length ? "看採集成果" : "下一隻";
     $("#q-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
@@ -545,9 +550,15 @@
       `<div class="exp"><b>正解：${keys}</b>　${fmt(q.explanation || "（本題沒有附解析）")}</div>` +
       `<button class="primary wide" id="m-close">關閉</button>`;
     $("#modal").classList.remove("hidden");
-    $("#m-close").addEventListener("click", closeModal);
+    $("#m-close").addEventListener("click", () => closeModal(true));
   }
-  function closeModal() { $("#modal").classList.add("hidden"); }
+  // 後面還有下一步的視窗（章節結算、Boss 勝利、新島民登場、建立島主）會設 data-lock，只能按按鈕關
+  function closeModal(force) {
+    if (force !== true && $("#modal").dataset.lock) return;
+    $("#modal").classList.add("hidden");
+  }
+  new MutationObserver(() => { if ($("#modal").classList.contains("hidden")) delete $("#modal").dataset.lock; })
+    .observe($("#modal"), { attributes: true, attributeFilter: ["class"] });
   $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
@@ -688,7 +699,7 @@
   }
 
   // ---------- 啟動 ----------
-  fetch("data/bank.json?v=20261104")
+  fetch("data/bank.json?v=20261104b")
     .then((r) => r.json())
     .then((d) => {
       BANK = d.questions;

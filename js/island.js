@@ -14,7 +14,7 @@ export const MATS = [
   { id: "stone", name: "石材", icon: "⛰️", from: "字形山" },
   { id: "shell", name: "貝殼", icon: "🐚", from: "字義海" },
   { id: "flower", name: "花種", icon: "🌸", from: "成語谷" },
-  { id: "star", name: "星砂", icon: "✨", from: "會考神殿" },
+  { id: "star", name: "星砂", icon: "✨", from: "第一次答對會考、基測真題" },
   { id: "bamboo", name: "竹簡", icon: "📜", from: "文字遺跡" },
   { id: "glass", name: "琉璃", icon: "💎", from: "文句工坊" },
   { id: "redpaper", name: "紅紙", icon: "🧧", from: "禮俗市集" },
@@ -84,13 +84,19 @@ function isSand(x, z, L) {
 let renderer, scene, camera, controls, sun, amb, water, waterGeo, landGroup, objGroup, cursor, residents = [];
 let started = false, building = null, clock = new THREE.Clock();
 const lights = [];
+// 手機（窄螢幕或觸控）降低畫質換流暢：解析度上限 1.5、簡單陰影、水面網格減半、夜海最多 2 盞真光源
+const MOBILE = matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+const MAX_LAMPS = MOBILE ? 2 : Infinity;
+function lampsOn(night) {
+  lights.forEach((l, i) => { l.visible = night && i < MAX_LAMPS; });
+}
 
 function init() {
   const box = $("#island-3d");
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  renderer.setPixelRatio(Math.min(MOBILE ? 1.5 : 2, window.devicePixelRatio));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = MOBILE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   box.appendChild(renderer.domElement);
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
@@ -108,11 +114,11 @@ function init() {
   sun = new THREE.DirectionalLight(0xffffff, 2);
   sun.position.set(8, 14, 6);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.mapSize.set(MOBILE ? 512 : 1024, MOBILE ? 512 : 1024);
   Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11 });
   scene.add(sun);
 
-  waterGeo = new THREE.PlaneGeometry(80, 80, 48, 48);
+  waterGeo = new THREE.PlaneGeometry(80, 80, MOBILE ? 24 : 48, MOBILE ? 24 : 48);
   waterGeo.rotateX(-Math.PI / 2);
   water = new THREE.Mesh(waterGeo, new THREE.MeshStandardMaterial({ color: 0x4fb3bf, roughness: 0.35, flatShading: true }));
   water.position.y = -0.18;
@@ -168,7 +174,7 @@ function applyTheme(name) {
   sun.intensity = t.sunI;
   amb.intensity = t.amb;
   water.material.color.set(t.water);
-  for (const l of lights) l.visible = t.night;
+  lampsOn(t.night);
   for (const b of document.querySelectorAll("#is-theme button")) b.classList.toggle("cur", b.textContent === name);
   G.save();
 }
@@ -476,8 +482,8 @@ function rebuild() {
     g.traverse((c) => { if (c.userData.lamp) lights.push(c); });
     objGroup.add(g);
   }
-  const night = THEMES[I.theme || "晨光"].night;
-  for (const l of lights) l.visible = night;
+  lights.sort((a, b) => b.intensity - a.intensity);   // 手機只留最亮的幾盞（燈塔優先）
+  lampsOn(THEMES[I.theme || "晨光"].night);
   spawnResidents();
   renderHud();
 }
@@ -697,13 +703,16 @@ function score() {
   return Object.values(I.objs).reduce((s, o) => s + (ITEM[o.t]?.score || 1), 0) + I.land.length * 0.2;
 }
 const STAR_AT = [0, 12, 35, 70, 120];
+// 空島（只有一開始的帳篷）是 0 星；蓋了第一個建築才有一星，之後照分數升星
+const starsOf = (sc) => (Object.values(island().objs).some((o) => o.t !== "tent") ? STAR_AT.filter((v) => sc >= v).length : 0);
 function renderHud() {
   const m = G.state().mat;
   $("#is-mats").innerHTML = MATS.map((x) => `<span title="${x.name}（${x.from}）">${icon("m_" + x.id, x.icon)}<b>${m[x.id] || 0}</b></span>`).join("");
-  const s = score(), stars = STAR_AT.filter((v) => s >= v).length;
+  const s = score(), stars = starsOf(s);
   const next = STAR_AT[stars];
   $("#is-rate").innerHTML = `島嶼評價 <b>${"★".repeat(stars)}${"☆".repeat(5 - stars)}</b>` +
-    (next ? `<span class="muted small">　再 ${Math.ceil(next - s)} 分升一星</span>` : "");
+    (!stars ? `<span class="muted small">　蓋第一棟建築就有一星</span>` :
+      next ? `<span class="muted small">　再 ${Math.ceil(next - s)} 分升一星</span>` : "");
 }
 // 有生好的圖示就用圖，沒有就用表情符號
 function icon(id, emoji) {
@@ -801,19 +810,38 @@ function questState() {
   S.qb ||= { active: [], done: {}, used: 0 };
   const byId = Object.fromEntries(G.quests().map((q) => [q.id, q]));
   for (const id of GUESTS) if (guests()[id]) for (const q of guestQuests(id)) byId[q.id] = q;
-  S.qb.active = S.qb.active.filter((id) => byId[id]);
+  // 只有已經住在島上的島民會來委託：丹頂鶴爺爺從序章就在，其他跟著主線或建築搬來
+  const moved = (S.story && S.story.moved) || [];
+  const here = (npc) => npc === "crane" || moved.includes(npc) || !!guests()[npc];
+  S.qb.active = S.qb.active.filter((id) => byId[id] && here(byId[id].npc));
   // 每位島民機會一樣：先抽島民，再抽他還沒做過的委託（新島民題目多，才不會蓋過原本的島民）
   const groups = {};
-  for (const q of Object.values(byId)) (groups[q.npc] ||= []).push(q);
+  for (const q of Object.values(byId)) if (here(q.npc)) (groups[q.npc] ||= []).push(q);
   const allow = 2 + (S.questTick || 0) - S.qb.used;
+  const pick = (g) => {
+    const left = g.filter((q) => !S.qb.active.includes(q.id));
+    const fresh = left.filter((q) => !S.qb.done[q.id]);
+    const from = fresh.length ? fresh : left;
+    return from.length ? from[Math.floor(Math.random() * from.length)].id : null;
+  };
+  // 第六章要貼春聯：委託板保證有一張春聯委託
+  if (window.HKStory && window.HKStory.wantsCouplet && window.HKStory.wantsCouplet() &&
+      !S.qb.active.some((id) => byId[id].effect === "couplet") && allow > 0) {
+    const id = pick(Object.values(byId).filter((q) => q.effect === "couplet" && here(q.npc)));
+    if (id) {
+      if (S.qb.active.length >= Math.min(3, allow)) S.qb.active.pop();
+      S.qb.active.unshift(id);
+    }
+  }
   while (S.qb.active.length < 3 && allow > S.qb.active.length) {
     const busy = new Set(S.qb.active.map((id) => byId[id].npc));
-    const npcs = Object.keys(groups).filter((n) => !busy.has(n));
+    let npcs = Object.keys(groups).filter((n) => !busy.has(n));
+    // 島民還少（例如序章只有丹頂鶴爺爺）時，同一位島民可以同時有兩張，至少有 2 張委託可接
+    if (!npcs.length && S.qb.active.length < 2) npcs = Object.keys(groups);
     if (!npcs.length) break;
-    const g = groups[npcs[Math.floor(Math.random() * npcs.length)]];
-    const fresh = g.filter((q) => !S.qb.done[q.id]);
-    const from = fresh.length ? fresh : g;
-    S.qb.active.push(from[Math.floor(Math.random() * from.length)].id);
+    const id = pick(groups[npcs[Math.floor(Math.random() * npcs.length)]]);
+    if (!id) break;
+    S.qb.active.push(id);
   }
   G.save();
   return { S, byId };
@@ -843,6 +871,7 @@ function checkGuests() {
   if (window.HKMusic) window.HKMusic.sfx("chapter");
   step();
   $("#modal").classList.remove("hidden");
+  $("#modal").dataset.lock = "1";      // 要按到「歡迎入住！」才會重建島和委託
 }
 function lureText(id) {
   const n = NPCS[id], it = ITEM[n.lure];
@@ -957,6 +986,8 @@ function show() {
     $("#is-build").addEventListener("click", () => {
       const open = $("#is-panel").classList.toggle("hidden");
       $("#is-build").textContent = open ? "建造" : "收起建造";
+      // 建造按鈕在島的下方，按了要把島和工具列捲進畫面，不然手機上看不到
+      if (!open) requestAnimationFrame(() => $(".island-wrap").scrollIntoView({ behavior: "smooth", block: "start" }));
       if (open) { building = null; cursor.visible = false; }
       // 工具列蓋住畫面下方時，把注視點往鏡頭方向移，島就會往上挪
       const shift = open ? 0 : 2.2;
@@ -979,7 +1010,7 @@ function stats() {
   const I = island(), c = {};
   for (const o of Object.values(I.objs)) c[o.t] = (c[o.t] || 0) + 1;
   const sc = score();
-  return { count: c, land: I.land.length, score: sc, stars: STAR_AT.filter((v) => sc >= v).length,
+  return { count: c, land: I.land.length, score: sc, stars: starsOf(sc),
     couplets: Object.values(I.objs).filter((o) => o.couplet).length, quests: Object.keys((G.state().qb || {}).done || {}).length };
 }
 function refresh() { if (started) { rebuild(); renderQuests(); } }
